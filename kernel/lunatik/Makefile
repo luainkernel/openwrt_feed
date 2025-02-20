@@ -113,7 +113,7 @@ define Build/Prepare
 endef
 
 define Build/Compile
-	$(KERNEL_MAKE) M="$(PKG_BUILD_DIR)" EXTRA_CFLAGS="$(EXTRA_CFLAGS)" $(EXTRA_KCONFIG) modules
+	$(KERNEL_MAKE) M="$(PKG_BUILD_DIR)" EXTRA_CFLAGS="$(EXTRA_CFLAGS)" EXTRA_ASFLAGS="$(EXTRA_CFLAGS)" $(EXTRA_KCONFIG) modules
 endef
 
 $(eval $(call KernelPackage,lunatik))
