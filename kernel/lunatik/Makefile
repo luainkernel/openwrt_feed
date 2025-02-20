@@ -106,7 +106,7 @@ define Package/lunatik-scripts/install
 endef
 
 define Build/Prepare
-        $(Build/Prepare/Default)
+	$(Build/Prepare/Default)
 	cd $(PKG_BUILD_DIR) && ./gensymbols.sh $(LUA_API) > lunatik_sym.h
 	cp $(PKG_BUILD_DIR)/Kbuild $(PKG_BUILD_DIR)/Makefile
 	rm $(PKG_BUILD_DIR)/include/stdarg.h
