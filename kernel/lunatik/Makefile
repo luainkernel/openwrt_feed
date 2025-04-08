@@ -29,6 +29,8 @@ ifeq ($(ARCH), x86)
 	endif
 else ifeq ($(ARCH), aarch64)
 	KLIBC_ARCH := arm64
+else ifeq ($(ARCH), mipsel)
+	KLIBC_ARCH := mips
 else
 	KLIBC_ARCH := $(ARCH)
 endif
