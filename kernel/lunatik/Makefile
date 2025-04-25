@@ -35,7 +35,7 @@ else
 	KLIBC_ARCH := $(ARCH)
 endif
 
-KLIBC_USR := /klibc/usr
+KLIBC_USR := klibc/usr
 
 EXTRA_KCONFIG:= CONFIG_LUNATIK=m \
 	CONFIG_LUNATIK_RUN=m CONFIG_LUNATIK_RUNTIME=y CONFIG_LUNATIK_DEVICE=m \
@@ -47,7 +47,9 @@ EXTRA_KCONFIG:= CONFIG_LUNATIK=m \
 
 EXTRA_CFLAGS:= -Wimplicit-fallthrough=0 -Wno-declaration-after-statement \
 	-I$(PKG_BUILD_DIR) -I$(PKG_BUILD_DIR)/include -I$(PKG_BUILD_DIR)/lua \
-	-I$(PKG_BUILD_DIR)$(KLIBC_USR)/include/arch/$(KLIBC_ARCH)
+	-I$(PKG_BUILD_DIR)/$(KLIBC_USR)/include/arch/$(KLIBC_ARCH)
+
+KBUILD_AFLAGS:= -I$(PKG_BUILD_DIR)/$(KLIBC_USR)/include/arch/$(KLIBC_ARCH)
 
 LUA_API:= lua/lua.h lua/lauxlib.h lua/lualib.h
 
@@ -115,7 +117,11 @@ define Build/Prepare
 endef
 
 define Build/Compile
-	$(KERNEL_MAKE) M="$(PKG_BUILD_DIR)" EXTRA_CFLAGS="$(EXTRA_CFLAGS)" $(EXTRA_KCONFIG) modules
+	$(KERNEL_MAKE) M="$(PKG_BUILD_DIR)" \
+		EXTRA_CFLAGS="$(EXTRA_CFLAGS)" \
+		KBUILD_AFLAGS="$(KBUILD_AFLAGS)" \
+		$(EXTRA_KCONFIG) \
+		modules
 endef
 
 $(eval $(call KernelPackage,lunatik))
