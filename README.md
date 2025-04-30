@@ -11,14 +11,11 @@ The feed is comprised by the following packages:
 
 ## Feed configuration
 
-In order to use this feed into an OpenWrt build, simply add the following line to your `feeds.conf.default`:
+In order to use this feed into an OpenWrt build, add the following line to your `feeds.conf.default`:
 
 ```sh
 src-git luainkernel https://github.com/luainkernel/openwrt_feed.git;openwrt-23.05
 ```
-
-> [!IMPORTANT]
-> Make sure to set the `<commit-hash>` that corresponds to the lunatik release you'd like to use, which is defined at [`the package Makefile`](./kernel/lunatik/Makefile).
 
 After that, update and install the feed:
 
@@ -49,8 +46,8 @@ Kernel modules --->
 ## Build the image
 
 ```sh
-time make -j$(nproc) V=s
+make -j$(nproc)
 ```
 
 > [!IMPORTANT]
-> For build on WSL, make sure to follow [Build system setup WSL](https://openwrt.org/docs/guide-developer/toolchain/wsl).
+> For builds on WSL, make sure to follow [Build system setup WSL](https://openwrt.org/docs/guide-developer/toolchain/wsl).
