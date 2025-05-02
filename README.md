@@ -27,7 +27,7 @@ After that, update and install the feed:
 > [!NOTE]
 > Refer to [OpenWrt Feeds](https://openwrt.org/docs/guide-developer/feeds) for more information.
 
-## Build
+## Build instructions
 
 ### Configure buildroot
 
@@ -43,7 +43,9 @@ Kernel modules --->
 > Each platform may require some extra configuration.
 > Some sample configuration may be found under [`./config`](./config).
 
-## Build the image
+### Build an image for the target platform
+
+In order to build an image, execute:
 
 ```sh
 make -j$(nproc)
@@ -51,3 +53,11 @@ make -j$(nproc)
 
 > [!IMPORTANT]
 > For builds on WSL, make sure to follow [Build system setup WSL](https://openwrt.org/docs/guide-developer/toolchain/wsl).
+
+### Compile Lunatik
+
+Once a full image build is complete, Lunatik may be recompiled by executing the following command:
+
+```sh
+make package/feeds/luainkernel/lunatik/compile
+```
