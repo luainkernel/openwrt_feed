@@ -7,14 +7,14 @@ The feed is comprised by the following packages:
 - lua5.4 (as a dependency)
 
 > [!NOTE]
-> This feed has been tested only on [OpenWrt 23.05.5](https://github.com/openwrt/openwrt/releases/tag/v23.05.5).
+> This feed has been tested only on [OpenWrt 24.10.4](https://github.com/openwrt/openwrt/releases/tag/v24.10.4).
 
 ## Feed configuration
 
 In order to use this feed into an OpenWrt build, add the following line to your `feeds.conf.default`:
 
 ```sh
-src-git luainkernel https://github.com/luainkernel/openwrt_feed.git;openwrt-23.05
+src-git luainkernel https://github.com/luainkernel/openwrt_feed.git;openwrt-24.10
 ```
 
 After that, update and install the feed:
