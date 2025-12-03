@@ -8,13 +8,13 @@ include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/netfilter.mk
 
 PKG_NAME:=lunatik
-PKG_VERSION:=3.7
+PKG_VERSION:=3.7.1
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE_URL:=https://github.com/luainkernel/lunatik
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2025-07-13
-PKG_SOURCE_VERSION:=925bfd95498017830f8200c1d0cf3fdaddb94be9
+PKG_SOURCE_DATE:=2025-09-11
+PKG_SOURCE_VERSION:=8944dc3055071be4ac3aadccd7d791a4be62cd27
 
 PKG_MAINTAINER:=Lourival Vieira Neto<lourival.neto@gmail.com>
 PKG_BUILD_PARALLEL:=1
@@ -43,7 +43,9 @@ EXTRA_KCONFIG:= CONFIG_LUNATIK=m \
 	CONFIG_LUNATIK_RCU=m CONFIG_LUNATIK_THREAD=m CONFIG_LUNATIK_FIB=m \
 	CONFIG_LUNATIK_DATA=m CONFIG_LUNATIK_PROBE=n CONFIG_LUNATIK_SYSCALL=n \
 	CONFIG_LUNATIK_FIFO=m CONFIG_LUNATIK_NETFILTER=m \
-	CONFIG_LUNATIK_COMPLETION=m
+	CONFIG_LUNATIK_COMPLETION=m \ CONFIG_LUNATIK_CRYPTO_SHASH=m \
+	CONFIG_LUNATIK_CRYPTO_SKCIPHER=m CONFIG_LUNATIK_CRYPTO_AEAD=m \
+	CONFIG_LUNATIK_CRYPTO_RNG=m CONFIG_LUNATIK_CRYPTO_COMP=m
 
 EXTRA_CFLAGS:= -Wimplicit-fallthrough=0 -Wno-declaration-after-statement \
 	-I$(PKG_BUILD_DIR) -I$(PKG_BUILD_DIR)/include -I$(PKG_BUILD_DIR)/lua \
@@ -70,13 +72,19 @@ define KernelPackage/lunatik
   KCONFIG:=CONFIG_NETFILTER=y CONFIG_NETFILTER_ADVANCED=y
   DEPENDS:=\
 	   +kmod-nf-ipt \
+	   +kmod-crypto-rng \
 	   +lunatik-scripts
   FILES:=$(PKG_BUILD_DIR)/lunatik.ko $(PKG_BUILD_DIR)/lunatik_run.ko \
 	 $(PKG_BUILD_DIR)/lib/luarcu.ko $(PKG_BUILD_DIR)/lib/luadevice.ko \
 	 $(PKG_BUILD_DIR)/lib/luadata.ko $(PKG_BUILD_DIR)/lib/luanetfilter.ko \
 	 $(PKG_BUILD_DIR)/lib/luasocket.ko \
 	 $(PKG_BUILD_DIR)/lib/luathread.ko $(PKG_BUILD_DIR)/lib/lualinux.ko \
-	 $(PKG_BUILD_DIR)/lib/luafifo.ko $(PKG_BUILD_DIR)/lib/luacompletion.ko
+	 $(PKG_BUILD_DIR)/lib/luafifo.ko $(PKG_BUILD_DIR)/lib/luacompletion.ko \
+	 $(PKG_BUILD_DIR)/lib/luacrypto_shash.ko \
+	 $(PKG_BUILD_DIR)/lib/luacrypto_skcipher.ko \
+	 $(PKG_BUILD_DIR)/lib/luacrypto_aead.ko \
+	 $(PKG_BUILD_DIR)/lib/luacrypto_rng.ko \
+	 $(PKG_BUILD_DIR)/lib/luacrypto_comp.ko
   AUTOLOAD:=$(call AutoLoad,30,lunatik,1)
 endef
 
@@ -101,12 +109,14 @@ define Package/lunatik-scripts/install
 	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
 	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/socket
 	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/syscall
+	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/crypto
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/driver.lua $(1)$(SCRIPTS_INSTALL_PATH)
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/mailbox.lua $(1)$(SCRIPTS_INSTALL_PATH)
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/net.lua $(1)$(SCRIPTS_INSTALL_PATH)
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/lunatik/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/socket/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/socket
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/syscall/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/syscall
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/crypto/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/crypto
 endef
 
 define Build/Prepare
