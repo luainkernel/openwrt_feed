@@ -69,8 +69,7 @@ define KernelPackage/lunatik
   SUBMENU:=Other modules
   KCONFIG:=CONFIG_NETFILTER=y CONFIG_NETFILTER_ADVANCED=y
   DEPENDS:=\
-	   +kmod-nf-ipt \
-	   +lunatik-scripts
+	   +kmod-nf-ipt
   FILES:=$(PKG_BUILD_DIR)/lunatik.ko $(PKG_BUILD_DIR)/lunatik_run.ko \
 	 $(PKG_BUILD_DIR)/lib/luarcu.ko $(PKG_BUILD_DIR)/lib/luadevice.ko \
 	 $(PKG_BUILD_DIR)/lib/luadata.ko $(PKG_BUILD_DIR)/lib/luanetfilter.ko \
@@ -87,7 +86,8 @@ endef
 define Package/lunatik-scripts
   $(call Package/lunatik/Default)
   DEPENDS:=\
-	   +lua5.4
+	   +lua5.4 \
+	   +kmod-lunatik
 endef
 
 define Package/lunatik-scripts/description
