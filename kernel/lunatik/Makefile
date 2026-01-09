@@ -39,9 +39,8 @@ KLIBC_USR := klibc/usr
 
 EXTRA_KCONFIG:= CONFIG_LUNATIK=m \
 	CONFIG_LUNATIK_RUN=m CONFIG_LUNATIK_RUNTIME=y CONFIG_LUNATIK_DEVICE=m \
-	CONFIG_LUNATIK_LINUX=m CONFIG_LUNATIK_SOCKET=m \
-	CONFIG_LUNATIK_RCU=m CONFIG_LUNATIK_THREAD=m CONFIG_LUNATIK_FIB=m \
-	CONFIG_LUNATIK_DATA=m CONFIG_LUNATIK_PROBE=n CONFIG_LUNATIK_SYSCALL=n \
+	CONFIG_LUNATIK_RCU=m CONFIG_LUNATIK_THREAD=m \
+	CONFIG_LUNATIK_DATA=m \
 	CONFIG_LUNATIK_FIFO=m CONFIG_LUNATIK_NETFILTER=m \
 	CONFIG_LUNATIK_COMPLETION=m
 
@@ -74,8 +73,7 @@ define KernelPackage/lunatik
   FILES:=$(PKG_BUILD_DIR)/lunatik.ko $(PKG_BUILD_DIR)/lunatik_run.ko \
 	 $(PKG_BUILD_DIR)/lib/luarcu.ko $(PKG_BUILD_DIR)/lib/luadevice.ko \
 	 $(PKG_BUILD_DIR)/lib/luadata.ko $(PKG_BUILD_DIR)/lib/luanetfilter.ko \
-	 $(PKG_BUILD_DIR)/lib/luasocket.ko \
-	 $(PKG_BUILD_DIR)/lib/luathread.ko $(PKG_BUILD_DIR)/lib/lualinux.ko \
+	 $(PKG_BUILD_DIR)/lib/luathread.ko \
 	 $(PKG_BUILD_DIR)/lib/luafifo.ko $(PKG_BUILD_DIR)/lib/luacompletion.ko
   AUTOLOAD:=$(call AutoLoad,30,lunatik,1)
 endef
