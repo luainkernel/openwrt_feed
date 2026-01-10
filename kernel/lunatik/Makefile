@@ -8,13 +8,13 @@ include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/netfilter.mk
 
 PKG_NAME:=lunatik
-PKG_VERSION:=3.7.2
+PKG_VERSION:=4.0
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE_URL:=https://github.com/luainkernel/lunatik
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2026-01-09
-PKG_SOURCE_VERSION:=682668816fc16191c4a02d19e35cb5ae67f0c063
+PKG_SOURCE_DATE:=2026-01-23
+PKG_SOURCE_VERSION:=adace5ec6bc02bf15941ee2a3aca8a8416605520
 
 PKG_MAINTAINER:=Lourival Vieira Neto<lourival.neto@ringzero.com.br>
 PKG_BUILD_PARALLEL:=1
@@ -39,7 +39,7 @@ KLIBC_USR := klibc/usr
 
 EXTRA_KCONFIG:= CONFIG_LUNATIK=m \
 	CONFIG_LUNATIK_RUN=m CONFIG_LUNATIK_RUNTIME=y CONFIG_LUNATIK_DEVICE=m \
-	CONFIG_LUNATIK_LINUX=m CONFIG_LUNATIK_SOCKET=m \
+	CONFIG_LUNATIK_LINUX=m CONFIG_LUNATIK_SOCKET=m CONFIG_LUNATIK_BYTEORDER=m \
 	CONFIG_LUNATIK_RCU=m CONFIG_LUNATIK_THREAD=m CONFIG_LUNATIK_FIB=m \
 	CONFIG_LUNATIK_DATA=m CONFIG_LUNATIK_PROBE=n CONFIG_LUNATIK_SYSCALL=n \
 	CONFIG_LUNATIK_FIFO=m CONFIG_LUNATIK_NETFILTER=m \
@@ -71,11 +71,15 @@ define KernelPackage/lunatik
   SUBMENU:=Other modules
   KCONFIG:=CONFIG_NETFILTER=y CONFIG_NETFILTER_ADVANCED=y
   DEPENDS:=\
-	   +kmod-nf-ipt
+	+kmod-nf-ipt \
+	+lunatik-scripts \
+	+kmod-crypto-rng \
+	+kmod-crypto-hash \
+	+kmod-crypto-hmac
   FILES:=$(PKG_BUILD_DIR)/lunatik.ko $(PKG_BUILD_DIR)/lunatik_run.ko \
 	 $(PKG_BUILD_DIR)/lib/luarcu.ko $(PKG_BUILD_DIR)/lib/luadevice.ko \
 	 $(PKG_BUILD_DIR)/lib/luadata.ko $(PKG_BUILD_DIR)/lib/luanetfilter.ko \
-	 $(PKG_BUILD_DIR)/lib/luasocket.ko \
+	 $(PKG_BUILD_DIR)/lib/luasocket.ko $(PKG_BUILD_DIR)/lib/luabyteorder.ko \
 	 $(PKG_BUILD_DIR)/lib/luathread.ko $(PKG_BUILD_DIR)/lib/lualinux.ko \
 	 $(PKG_BUILD_DIR)/lib/luafifo.ko $(PKG_BUILD_DIR)/lib/luacompletion.ko \
 	 $(PKG_BUILD_DIR)/lib/luacrypto_shash.ko \
@@ -120,7 +124,7 @@ endef
 
 define Build/Prepare
 	$(Build/Prepare/Default)
-	cd $(PKG_BUILD_DIR) && ./gensymbols.sh $(LUA_API) > lunatik_sym.h
+	cd $(PKG_BUILD_DIR) && CC=$(CC) ./gensymbols.sh $(LUA_API) > lunatik_sym.h
 	cp $(PKG_BUILD_DIR)/Kbuild $(PKG_BUILD_DIR)/Makefile
 	$(if $(call kernel_patchver_lt,5.15),rm $(PKG_BUILD_DIR)/include/stdarg.h)
 endef
@@ -135,3 +139,4 @@ endef
 
 $(eval $(call KernelPackage,lunatik))
 $(eval $(call BuildPackage,lunatik-scripts))
+
