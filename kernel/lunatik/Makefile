@@ -8,13 +8,13 @@ include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/netfilter.mk
 
 PKG_NAME:=lunatik
-PKG_VERSION:=3.7.2
+PKG_VERSION:=4.0
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE_URL:=https://github.com/luainkernel/lunatik
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_DATE:=2026-01-09
-PKG_SOURCE_VERSION:=682668816fc16191c4a02d19e35cb5ae67f0c063
+PKG_SOURCE_VERSION:=48c9bfc1b0bf718d684e698d58f6f76cd382d44c
 
 PKG_MAINTAINER:=Lourival Vieira Neto<lourival.neto@ringzero.com.br>
 PKG_BUILD_PARALLEL:=1
