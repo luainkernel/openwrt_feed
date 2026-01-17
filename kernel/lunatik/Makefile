@@ -5,6 +5,7 @@
 
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
+include $(INCLUDE_DIR)/netfilter.mk
 
 PKG_NAME:=lunatik
 PKG_VERSION:=3.6.4
