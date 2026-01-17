@@ -1,8 +1,9 @@
 #
 # SPDX-FileCopyrightText: (c) 2025 Ring Zero Desenvolvimento de Software LTDA
 # SPDX-License-Identifier: MIT OR GPL-2.0-only
-#include $(TOPDIR)/rules.mk
+#
 
+include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=lunatik
