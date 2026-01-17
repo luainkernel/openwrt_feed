@@ -4,6 +4,7 @@
 #
 
 include $(TOPDIR)/rules.mk
+-include $(TOPDIR)/.config
 include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/netfilter.mk
 
@@ -11,10 +12,10 @@ PKG_NAME:=lunatik
 PKG_VERSION:=3.6.4
 PKG_LICENSE:=GPL-2.0
 
-PKG_SOURCE_URL:=https://github.com/luainkernel/lunatik
+PKG_SOURCE_URL:=https://github.com/Zapper9982/lunatik
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2025-10-30
-PKG_SOURCE_VERSION:=7f89098145fb55af355318a9936b5f2c562d5d90
+PKG_SOURCE_DATE:=2026-01-17
+PKG_SOURCE_VERSION:=70187755
 
 PKG_MAINTAINER:=Lourival Vieira Neto<lourival.neto@gmail.com>
 PKG_BUILD_PARALLEL:=1
@@ -37,7 +38,7 @@ endif
 
 KLIBC_USR := klibc/usr
 
-EXTRA_KCONFIG:= CONFIG_LUNATIK=m \
+EXTRA_KCONFIG= CONFIG_LUNATIK=m \
 	CONFIG_LUNATIK_RUNTIME=y \
 	CONFIG_LUNATIK_RUN=$(if $(CONFIG_PACKAGE_kmod-lunatik-run),m,n) \
 	CONFIG_LUNATIK_DEVICE=$(if $(CONFIG_PACKAGE_kmod-lunatik-device),m,n) \
@@ -88,9 +89,10 @@ define Package/lunatik/Default
 endef
 
 define KernelPackage/lunatik
-  $(call Package/lunatik/Default)
   SUBMENU:=Other modules
-  TITLE+= Lua Interpreter
+  TITLE:=Lunatik Lua Interpreter
+  URL:=$(PKG_SOURCE_URL)
+  DEPENDS:=+lunatik-scripts
   FILES:=$(PKG_BUILD_DIR)/lunatik.ko
   AUTOLOAD:=$(call AutoLoad,30,lunatik,1)
 endef
@@ -101,44 +103,16 @@ endef
 
 define LunatikModule
   define KernelPackage/lunatik-$(1)
-    $$(call Package/lunatik/Default)
     SUBMENU:=Other modules
     TITLE+= $(2)
     DEPENDS+= +kmod-lunatik $(3)
     FILES:=$(PKG_BUILD_DIR)/$(4)
     AUTOLOAD:=$(call AutoLoad,31,lunatik-$(1),1)
-  endef
-  define KernelPackage/lunatik-$(1)/description
-    Lunatik $(2) support
+    URL:=$(PKG_SOURCE_URL)
   endef
   $$(eval $$(call KernelPackage,lunatik-$(1)))
 endef
 
-$(eval $(call LunatikModule,run,Run (Execution Support),,lunatik_run.ko))
-$(eval $(call LunatikModule,device,Device Support,,lib/luadevice.ko))
-$(eval $(call LunatikModule,linux,Linux API Bindings,,lib/lualinux.ko))
-$(eval $(call LunatikModule,socket,Socket Support,,lib/luasocket.ko))
-$(eval $(call LunatikModule,rcu,RCU Support,,lib/luarcu.ko))
-$(eval $(call LunatikModule,thread,Thread Support,,lib/luathread.ko))
-$(eval $(call LunatikModule,fib,FIB Support,,lib/luafib.ko))
-$(eval $(call LunatikModule,data,Data Support,,lib/luadata.ko))
-$(eval $(call LunatikModule,probe,Probe Support,,lib/luaprobe.ko))
-$(eval $(call LunatikModule,syscall,Syscall Support,,lib/luasyscall.ko))
-$(eval $(call LunatikModule,xdp,XDP Support,,lib/luaxdp.ko))
-$(eval $(call LunatikModule,fifo,FIFO Support,,lib/luafifo.ko))
-$(eval $(call LunatikModule,xtable,Xtable Support,+kmod-nf-ipt,lib/luaxtable.ko))
-$(eval $(call LunatikModule,netfilter,Netfilter bindings,,lib/luanetfilter.ko))
-$(eval $(call LunatikModule,completion,Completion Support,,lib/luacompletion.ko))
-$(eval $(call LunatikModule,crypto-shash,Crypto SHASH Support,,lib/luacrypto_shash.ko))
-$(eval $(call LunatikModule,crypto-skcipher,Crypto SKCIPHER Support,,lib/luacrypto_skcipher.ko))
-$(eval $(call LunatikModule,crypto-aead,Crypto AEAD Support,,lib/luacrypto_aead.ko))
-$(eval $(call LunatikModule,crypto-rng,Crypto RNG Support,,lib/luacrypto_rng.ko))
-$(eval $(call LunatikModule,crypto-comp,Crypto COMP Support,,lib/luacrypto_comp.ko))
-$(eval $(call LunatikModule,cpu,CPU Support,,lib/luacpu.ko))
-$(eval $(call LunatikModule,hid,HID Support,,lib/luahid.ko))
-$(eval $(call LunatikModule,signal,Signal Support,,lib/luasignal.ko))
-$(eval $(call LunatikModule,byteorder,Byteorder Support,,lib/luabyteorder.ko))
-$(eval $(call LunatikModule,notifier,Notifier Support,,lib/luanotifier.ko))
 
 define Package/lunatik-scripts
   $(call Package/lunatik/Default)
@@ -213,9 +187,12 @@ define Build/Prepare
 endef
 
 define Build/Compile
-	$(KERNEL_MAKE) M="$(PKG_BUILD_DIR)" \
+	$(info LINUX_DIR=$(LINUX_DIR))
+	$(MAKE) -C $(LINUX_DIR) \
+		M="$(PKG_BUILD_DIR)" \
 		EXTRA_CFLAGS="$(EXTRA_CFLAGS)" \
 		KBUILD_AFLAGS="$(KBUILD_AFLAGS)" \
+		$(KERNEL_MAKE_FLAGS) \
 		$(EXTRA_KCONFIG) \
 		modules
 endef
@@ -224,4 +201,30 @@ $(eval $(call KernelPackage,lunatik))
 $(eval $(call BuildPackage,lunatik-scripts))
 $(eval $(call BuildPackage,lunatik-examples))
 $(eval $(call BuildPackage,lunatik-tests))
+
+$(eval $(call LunatikModule,run,Run (Execution Support),,lunatik_run.ko))
+$(eval $(call LunatikModule,device,Device Support,,lib/luadevice.ko))
+$(eval $(call LunatikModule,linux,Linux API Bindings,,lib/lualinux.ko))
+$(eval $(call LunatikModule,socket,Socket Support,,lib/luasocket.ko))
+$(eval $(call LunatikModule,rcu,RCU Support,,lib/luarcu.ko))
+$(eval $(call LunatikModule,thread,Thread Support,,lib/luathread.ko))
+$(eval $(call LunatikModule,fib,FIB Support,,lib/luafib.ko))
+$(eval $(call LunatikModule,data,Data Support,,lib/luadata.ko))
+$(eval $(call LunatikModule,probe,Probe Support,,lib/luaprobe.ko))
+$(eval $(call LunatikModule,syscall,Syscall Support,,lib/luasyscall.ko))
+$(eval $(call LunatikModule,xdp,XDP Support,,lib/luaxdp.ko))
+$(eval $(call LunatikModule,fifo,FIFO Support,,lib/luafifo.ko))
+$(eval $(call LunatikModule,xtable,Xtable Support,+kmod-nf-ipt,lib/luaxtable.ko))
+$(eval $(call LunatikModule,netfilter,Netfilter bindings,,lib/luanetfilter.ko))
+$(eval $(call LunatikModule,completion,Completion Support,,lib/luacompletion.ko))
+$(eval $(call LunatikModule,crypto-shash,Crypto SHASH Support,,lib/luacrypto_shash.ko))
+$(eval $(call LunatikModule,crypto-skcipher,Crypto SKCIPHER Support,,lib/luacrypto_skcipher.ko))
+$(eval $(call LunatikModule,crypto-aead,Crypto AEAD Support,,lib/luacrypto_aead.ko))
+$(eval $(call LunatikModule,crypto-rng,Crypto RNG Support,,lib/luacrypto_rng.ko))
+$(eval $(call LunatikModule,crypto-comp,Crypto COMP Support,,lib/luacrypto_comp.ko))
+$(eval $(call LunatikModule,cpu,CPU Support,,lib/luacpu.ko))
+$(eval $(call LunatikModule,hid,HID Support,,lib/luahid.ko))
+$(eval $(call LunatikModule,signal,Signal Support,,lib/luasignal.ko))
+$(eval $(call LunatikModule,byteorder,Byteorder Support,,lib/luabyteorder.ko))
+$(eval $(call LunatikModule,notifier,Notifier Support,,lib/luanotifier.ko))
 
