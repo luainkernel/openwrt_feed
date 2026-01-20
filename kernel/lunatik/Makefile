@@ -14,7 +14,7 @@ PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE_URL:=https://github.com/Zapper9982/lunatik
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2026-01-19
+PKG_SOURCE_DATE:=2024-11-18
 PKG_SOURCE_VERSION:=4e48ccba6f2a92b1a4f90a69a1ea4f605752e694
 
 PKG_MAINTAINER:=Lourival Vieira Neto<lourival.neto@gmail.com>
@@ -181,7 +181,7 @@ endef
 
 define Build/Prepare
 	$(Build/Prepare/Default)
-	cd $(PKG_BUILD_DIR) && CC=gcc ./gensymbols.sh $(LUA_API) > lunatik_sym.h
+	cd $(PKG_BUILD_DIR) && CC=$(HOSTCC) ./gensymbols.sh $(LUA_API) > lunatik_sym.h
 	cp $(PKG_BUILD_DIR)/Kbuild $(PKG_BUILD_DIR)/Makefile
 	$(if $(call kernel_patchver_lt,5.15),rm $(PKG_BUILD_DIR)/include/stdarg.h)
 endef
