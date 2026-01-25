@@ -127,6 +127,7 @@ KERNEL_RELEASE := $(LINUX_VERSION)-$(LINUX_RELEASE)
 define Build/Prepare
 	$(Build/Prepare/Default)
 	cd $(PKG_BUILD_DIR) && CC=$(CC) ./gensymbols.sh $(LUA_API) > lunatik_sym.h
+	mkdir -p $(PKG_BUILD_DIR)/autogen/linux
 	cd $(PKG_BUILD_DIR) && CC=$(CC) lua5.4 gendefines.lua $(KERNEL_RELEASE) $(LINUX_DIR)/include $(PKG_BUILD_DIR)/autogen/linux
 	cp $(PKG_BUILD_DIR)/Kbuild $(PKG_BUILD_DIR)/Makefile
 	$(if $(call kernel_patchver_lt,5.15),rm $(PKG_BUILD_DIR)/include/stdarg.h)
