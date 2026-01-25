@@ -122,6 +122,8 @@ define Package/lunatik-scripts/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/crypto/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/crypto
 endef
 
+KERNEL_RELEASE := $(LINUX_VERSION)-$(LINUX_RELEASE)
+
 define Build/Prepare
 	$(Build/Prepare/Default)
 	cd $(PKG_BUILD_DIR) && CC=$(CC) ./gensymbols.sh $(LUA_API) > lunatik_sym.h
