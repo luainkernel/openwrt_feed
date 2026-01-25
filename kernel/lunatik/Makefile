@@ -97,8 +97,7 @@ endef
 define Package/lunatik-scripts
   $(call Package/lunatik/Default)
   DEPENDS:=\
-	   +lua5.4 \
-	   +kmod-lunatik
+	   +lua5.4
 endef
 
 define Package/lunatik-scripts/description
