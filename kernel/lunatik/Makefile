@@ -14,7 +14,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_SOURCE_URL:=https://github.com/luainkernel/lunatik
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_DATE:=2026-01-23
-PKG_SOURCE_VERSION:=911ac609d8ce55f5cfa49f0d93a1cdf7ef91ffa1
+PKG_SOURCE_VERSION:=bf3be4e944da000f472e77bfdc2a39e0b419e1bc
 
 PKG_MAINTAINER:=Lourival Vieira Neto<lourival.neto@ringzero.com.br>
 PKG_BUILD_PARALLEL:=1
@@ -127,7 +127,7 @@ KERNEL_RELEASE := $(LINUX_VERSION)-$(LINUX_RELEASE)
 define Build/Prepare
 	$(Build/Prepare/Default)
 	cd $(PKG_BUILD_DIR) && CC=$(CC) ./gensymbols.sh $(LUA_API) > lunatik_sym.h
-	mkdir -p $(PKG_BUILD_DIR)/autogen/linux
+	#mkdir -p $(PKG_BUILD_DIR)/autogen/linux
 	cd $(PKG_BUILD_DIR) && CC=$(CC) lua5.4 gendefines.lua $(KERNEL_RELEASE) $(LINUX_DIR)/include $(PKG_BUILD_DIR)/autogen/linux
 	cp $(PKG_BUILD_DIR)/Kbuild $(PKG_BUILD_DIR)/Makefile
 	$(if $(call kernel_patchver_lt,5.15),rm $(PKG_BUILD_DIR)/include/stdarg.h)
