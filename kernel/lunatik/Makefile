@@ -87,6 +87,8 @@ define Package/lunatik/Default
   URL:=$PKG_SOURCE_URL
 endef
 
+#$(PKG_BUILD_DIR)/lib/luadata.ko $(PKG_BUILD_DIR)/lib/luanetfilter.ko \
+
 define KernelPackage/lunatik
   $(call Package/lunatik/Default)
   SUBMENU:=Other modules
@@ -99,7 +101,7 @@ define KernelPackage/lunatik
 	+kmod-crypto-hmac
   FILES:=$(PKG_BUILD_DIR)/lunatik.ko $(PKG_BUILD_DIR)/lunatik_run.ko \
 	 $(PKG_BUILD_DIR)/lib/luarcu.ko $(PKG_BUILD_DIR)/lib/luadevice.ko \
-	 $(PKG_BUILD_DIR)/lib/luadata.ko $(PKG_BUILD_DIR)/lib/luanetfilter.ko \
+	 $(PKG_BUILD_DIR)/lib/luanetfilter.ko \
 	 $(PKG_BUILD_DIR)/lib/luasocket.ko $(PKG_BUILD_DIR)/lib/luabyteorder.ko \
 	 $(PKG_BUILD_DIR)/lib/luathread.ko $(PKG_BUILD_DIR)/lib/lualinux.ko \
 	 $(PKG_BUILD_DIR)/lib/luafifo.ko $(PKG_BUILD_DIR)/lib/luacompletion.ko \
@@ -125,6 +127,20 @@ endef
 define Package/lunatik-scripts/description
 	Lunatik kernel scripts and userspace utilities
 endef
+
+define LunatikModule
+  define KernelPackage/lunatik-$(1)
+    SUBMENU:=Other modules
+    TITLE:=Lunatik $(2)
+    DEPENDS:=+kmod-lunatik $(3)
+    FILES:=$(LINUX_DIR)/$(4)
+    AUTOLOAD:=$(call AutoLoad,31,lunatik_$(subst -,_,$(1)),1)
+    URL:=$(PKG_SOURCE_URL)
+  endef
+  $$(eval $$(call KernelPackage,lunatik-$(1)))
+endef
+
+$(eval $(call LunatikModule,data,Data Support,,lib/luadata.ko))
 
 define Package/lunatik-scripts/install
 	$(INSTALL_DIR) $(1)$(LUNATIK_INSTALL_PATH)
