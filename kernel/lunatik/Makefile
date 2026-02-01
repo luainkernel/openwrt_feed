@@ -66,7 +66,6 @@ LUNATIK_MODULES := \
         $(foreach c,$(LUNATIK_MODULES),\
                 $(if $(filter y m,$(CONFIG_LUNATIK_$(c))),$(c)))
 
-
 EXTRA_KCONFIG := $(LUNATIK_CONFIG_FLAGS)
 
 EXTRA_CFLAGS:= -Wimplicit-fallthrough=0 -Wno-declaration-after-statement \
@@ -148,12 +147,13 @@ define Package/lunatik-scripts/install
 endef
 
 KERNEL_RELEASE := $(LINUX_VERSION)-$(LINUX_RELEASE)
+LUNATIK_MODULES := $(strip $(LUNATIK_MODULES))
 
 define Build/Prepare
 	$(Build/Prepare/Default)
 	cd $(PKG_BUILD_DIR) && CC=$(CC) ./gensymbols.sh $(LUA_API) > lunatik_sym.h
 	#mkdir -p $(PKG_BUILD_DIR)/autogen/linux
-	cd $(PKG_BUILD_DIR) && CC=$(CC) lua5.4 configure.lua $(KERNEL_RELEASE) $(LINUX_DIR)/include $(LUNATIK_MODULES)
+	cd $(PKG_BUILD_DIR) && CC=$(CC) lua5.4 configure.lua $(KERNEL_RELEASE) $(LINUX_DIR)/include "$(LUNATIK_MODULES)"
 	cp $(PKG_BUILD_DIR)/Kbuild $(PKG_BUILD_DIR)/Makefile
 	$(if $(call kernel_patchver_lt,5.15),rm $(PKG_BUILD_DIR)/include/stdarg.h)
 endef
