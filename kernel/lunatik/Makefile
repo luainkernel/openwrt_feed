@@ -77,7 +77,7 @@ KBUILD_AFLAGS:= -I$(PKG_BUILD_DIR)/$(KLIBC_USR)/include/arch/$(KLIBC_ARCH)
 LUA_API:= lua/lua.h lua/lauxlib.h lua/lualib.h
 
 LUNATIK_INSTALL_PATH:= /usr/sbin
-
+LUA_5.4_INSTALL_PATH := /usr/local/lib/lua/5.4
 SCRIPTS_INSTALL_PATH:= /lib/modules/lua
 
 include $(INCLUDE_DIR)/package.mk
@@ -135,6 +135,7 @@ define Package/lunatik-scripts/install
 	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/socket
 	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/syscall
 	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/crypto
+	$(INSTALL_DIR) $(1)$(LUA_5.4_INSTALL_PATH)/lunatik
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/driver.lua $(1)$(SCRIPTS_INSTALL_PATH)
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/mailbox.lua $(1)$(SCRIPTS_INSTALL_PATH)
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/net.lua $(1)$(SCRIPTS_INSTALL_PATH)
@@ -144,6 +145,7 @@ define Package/lunatik-scripts/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/crypto/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/crypto
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/lunatik/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/linux/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/linux
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/lunatik/config.lua $(1)$(LUA_5.4_INSTALL_PATH)/lunatik
 endef
 
 KERNEL_RELEASE := $(LINUX_VERSION)-$(LINUX_RELEASE)
