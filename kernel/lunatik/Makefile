@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: (c) 2025 Ring Zero Desenvolvimento de Software LTDA
+# SPDX-FileCopyrightText: (c) 2025-2026 Ring Zero Desenvolvimento de Software LTDA
 # SPDX-License-Identifier: MIT OR GPL-2.0-only
 #
 
@@ -71,7 +71,6 @@ define KernelPackage/lunatik
   SUBMENU:=Other modules
   KCONFIG:=CONFIG_NETFILTER=y CONFIG_NETFILTER_ADVANCED=y
   DEPENDS:=\
-	+kmod-nf-ipt \
 	+lunatik-scripts \
 	+kmod-crypto-rng \
 	+kmod-crypto-hash \
