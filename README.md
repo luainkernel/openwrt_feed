@@ -29,6 +29,10 @@ After that, update and install the feed:
 
 ## Build instructions
 
+> [!IMPORTANT]
+> Lua 5.4 is required for building Lunatik.
+> Make sure to install it on the build machine.
+
 ### Configure buildroot
 
 Setup the target platform configuration as usual but make sure to select `kmod-lunatik` under the following path:
