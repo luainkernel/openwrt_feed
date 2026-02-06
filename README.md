@@ -39,10 +39,6 @@ Kernel modules --->
         <*> kmod-lunatik
 ```
 
-> [!IMPORTANT]  
-> Each platform may require some extra configuration.
-> Some sample configuration may be found under [`./config`](./config).
-
 ### Build an image for the target platform
 
 In order to build an image, execute:
