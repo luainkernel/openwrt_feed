@@ -16,7 +16,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_DATE:=2026-02-03
 PKG_SOURCE_VERSION:=v4.1.1
 
-PKG_MAINTAINER:=Lourival Vieira Neto<lourival.neto@ringzero.com.br>
+PKG_MAINTAINER:=Marcel Moura<marcel.moura@ringzero.com.br>
 PKG_BUILD_PARALLEL:=1
 PKG_FLAGS:=nonshared
 
