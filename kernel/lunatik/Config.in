@@ -1,0 +1,116 @@
+#
+# SPDX-FileCopyrightText: (c) 2026 Ring Zero Desenvolvimento de Software LTDA
+# SPDX-License-Identifier: MIT OR GPL-2.0-only
+#
+
+menu "Lunatik Modules"
+	depends on PACKAGE_kmod-lunatik
+
+config LUNATIK_BYTEORDER
+	bool "Lunatik Byteorder Support"
+	default m
+	help
+	  Byte order swapping functions.
+
+config LUNATIK_COMPLETION
+	bool "Lunatik Completion Support"
+	default m
+	help
+	  Kernel completion synchronization primitives.
+
+config LUNATIK_CRYPTO_AEAD
+	bool "Lunatik Crypto AEAD (Authenticated Encryption) Support"
+	default m
+	help
+	  Authenticated Encryption with Associated Data support.
+
+config LUNATIK_CRYPTO_RNG
+	bool "Lunatik Crypto RNG (Random Number Generator) Support"
+	default m
+	help
+	  Random Number Generator support.
+
+config LUNATIK_CRYPTO_SHASH
+	bool "Lunatik Crypto SHASH (Synchronous Hash) Support"
+	default m
+	help
+	  Synchronous Hash support.
+
+config LUNATIK_CRYPTO_SKCIPHER
+	bool "Lunatik Crypto SKCIPHER (Symmetric Key Cipher) Support"
+	default m
+	help
+	  Symmetric Key Cipher support.
+
+config LUNATIK_CRYPTO_COMP
+	bool "Lunatik Crypto COMP (Compression) Support"
+	default m
+	help
+	  Compression algorithm support.
+
+config LUNATIK_DATA
+	bool "Lunatik Data Support"
+	default m
+	help
+	  Shared data structures support.
+
+config LUNATIK_DEVICE
+	bool "Lunatik Device Support"
+	default y if LUNATIK_RUNTIME
+	help
+	  Allows creating character devices using Lua.
+
+config LUNATIK_FIFO
+	bool "Lunatik FIFO Support"
+	default m
+	help
+	  First-In-First-Out queue support.
+
+config LUNATIK_LINUX
+	bool "Lunatik Linux API Bindings"
+	default m
+	help
+	  Provides Lua bindings for common Linux kernel functions (random, stat, etc.).
+
+config LUNATIK_NETFILTER
+	bool "Lunatik Netfilter bindings"
+	default m
+	help
+	  New Netfilter API bindings.
+
+config LUNATIK_RCU
+	bool "Lunatik RCU Support"
+	default y if LUNATIK_RUNTIME
+	help
+	  Read-Copy-Update (RCU) synchronization support.
+
+config LUNATIK_RUN
+	bool "Lunatik Run (Execution Support)"
+	default y
+	help
+	  Support for running Lua scripts in the kernel. This is required
+	  for basic script execution functionality.
+
+config LUNATIK_RUNTIME
+	bool "Lunatik Runtime Environment"
+	default y
+	select LUNATIK_DEVICE
+	select LUNATIK_RCU
+	help
+	  Enables the core Lunatik runtime environment, allowing creation of
+	  isolated Lua states within the kernel. This requires both device
+	  and RCU support.
+
+config LUNATIK_SOCKET
+	bool "Lunatik Socket Support"
+	default m
+	help
+	  Networking socket support for Lua scripts.
+
+config LUNATIK_THREAD
+	bool "Lunatik Thread Support"
+	default m
+	help
+	  Kernel thread management from Lua.
+
+endmenu
