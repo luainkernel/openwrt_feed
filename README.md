@@ -32,6 +32,8 @@ After that, update and install the feed:
 > [!IMPORTANT]
 > Lua 5.4 is required for building Lunatik.
 > Make sure to install it on the build machine.
+>
+> On Debian/Ubuntu machines, simply run `sudo apt-get install lua5.4`
 
 ### Configure buildroot
 
