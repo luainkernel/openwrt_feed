@@ -39,8 +39,12 @@ Setup the target platform configuration as usual but make sure to select `kmod-l
 ```txt
 Kernel modules --->
     Other modules  --->
-        <*> kmod-lunatik
+        <*> kmod-lunatik................. Lunatik Lua Interpreter
+             Lunatik Modules  --->
 ```
+
+> [!NOTE]
+> Optionally unselect modules by navigating to sub-menu `Lunatik Modules`, which is enabled once `kmod-lunatik` is selected as show above.
 
 ### Build an image for the target platform
 
