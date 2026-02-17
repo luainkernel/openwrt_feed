@@ -37,38 +37,26 @@ endif
 
 KLIBC_USR := klibc/usr
 
-CONFIG_LUNATIK ?= m
-CONFIG_LUNATIK_RUNTIME ?= y
-CONFIG_LUNATIK_RUN ?= m
-
 LUNATIK_MODULES := DEVICE LINUX NOTIFIER SOCKET RCU THREAD FIB DATA PROBE SYSCALL XDP FIFO XTABLE NETFILTER \
         COMPLETION CRYPTO_SHASH CRYPTO_SKCIPHER CRYPTO_AEAD CRYPTO_RNG CRYPTO_COMP CPU HID SIGNAL BYTEORDER
 
-$(foreach c,$(LUNATIK_MODULES),\
-        $(eval CONFIG_LUNATIK_$(c) ?= m))
+LUNATIK_MODULE_FILENAME = $(strip \
+	$(if $(filter CRYPTO_AEAD,$(1)),luacrypto_aead, \
+	$(if $(filter CRYPTO_COMP,$(1)),luacrypto_comp, \
+	$(if $(filter CRYPTO_RNG,$(1)),luacrypto_rng, \
+	$(if $(filter CRYPTO_SHASH,$(1)),luacrypto_shash, \
+	$(if $(filter CRYPTO_SKCIPHER,$(1)),luacrypto_skcipher, \
+	lua$(shell echo $(1) | tr '[:upper:]' '[:lower:]')))))))
 
-# disable modules here, e.g.:
-CONFIG_LUNATIK_NOTIFIER := n
-CONFIG_LUNATIK_FIB := n
-CONFIG_LUNATIK_PROBE := n
-CONFIG_LUNATIK_SYSCALL := n
-CONFIG_LUNATIK_XDP := n
-CONFIG_LUNATIK_XTABLE := n
-CONFIG_LUNATIK_CPU := n
-CONFIG_LUNATIK_HID := n
-CONFIG_LUNATIK_SIGNAL := n
+LUNATIK_MODULES := $(foreach c,$(LUNATIK_MODULES), \
+    $(if $(CONFIG_LUNATIK_$(c)),$(c)))
 
-LUNATIK_CONFIG_MODULES := \
-        $(foreach c,$(LUNATIK_MODULES),CONFIG_LUNATIK_$(c)=$(CONFIG_LUNATIK_$(c)))
+LUNATIK_CONFIG_MODULES := $(foreach c,$(LUNATIK_MODULES),CONFIG_LUNATIK_$(c)=m)
 
-LUNATIK_CONFIG_FLAGS := CONFIG_LUNATIK=$(CONFIG_LUNATIK) CONFIG_LUNATIK_RUNTIME=$(CONFIG_LUNATIK_RUNTIME) \
-        CONFIG_LUNATIK_RUN=$(CONFIG_LUNATIK_RUN) $(LUNATIK_CONFIG_MODULES)
-
-LUNATIK_MODULES := \
-        $(foreach c,$(LUNATIK_MODULES),\
-                $(if $(filter y m,$(CONFIG_LUNATIK_$(c))),$(c)))
-
-EXTRA_KCONFIG := $(LUNATIK_CONFIG_FLAGS)
+EXTRA_KCONFIG := CONFIG_LUNATIK=$(if $(CONFIG_PACKAGE_kmod-lunatik),m,n) \
+	CONFIG_LUNATIK_RUNTIME=$(if $(CONFIG_LUNATIK_RUNTIME),y,n) \
+	CONFIG_LUNATIK_RUN=$(if $(CONFIG_LUNATIK_RUN),m,n) \
+	$(LUNATIK_CONFIG_MODULES)
 
 EXTRA_CFLAGS:= -Wimplicit-fallthrough=0 -Wno-declaration-after-statement \
 	-I$(PKG_BUILD_DIR) -I$(PKG_BUILD_DIR)/include -I$(PKG_BUILD_DIR)/lua \
@@ -84,68 +72,62 @@ SCRIPTS_INSTALL_PATH:= /lib/modules/lua
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/lunatik/Default
-  TITLE:=Lunatik
-  URL:=$PKG_SOURCE_URL
-endef
-
 define KernelPackage/lunatik
-  $(call Package/lunatik/Default)
   SUBMENU:=Other modules
-  KCONFIG:=CONFIG_NETFILTER=y CONFIG_NETFILTER_ADVANCED=y
-  DEPENDS:=\
-	+lunatik-scripts \
-	+kmod-crypto-rng \
-	+kmod-crypto-hash \
-	+kmod-crypto-hmac
-  FILES:=$(PKG_BUILD_DIR)/lunatik.ko $(PKG_BUILD_DIR)/lunatik_run.ko \
-	 $(PKG_BUILD_DIR)/lib/luarcu.ko $(PKG_BUILD_DIR)/lib/luadevice.ko \
-	 $(PKG_BUILD_DIR)/lib/luadata.ko $(PKG_BUILD_DIR)/lib/luanetfilter.ko \
-	 $(PKG_BUILD_DIR)/lib/luasocket.ko $(PKG_BUILD_DIR)/lib/luabyteorder.ko \
-	 $(PKG_BUILD_DIR)/lib/luathread.ko $(PKG_BUILD_DIR)/lib/lualinux.ko \
-	 $(PKG_BUILD_DIR)/lib/luafifo.ko $(PKG_BUILD_DIR)/lib/luacompletion.ko \
-	 $(PKG_BUILD_DIR)/lib/luacrypto_shash.ko \
-	 $(PKG_BUILD_DIR)/lib/luacrypto_skcipher.ko \
-	 $(PKG_BUILD_DIR)/lib/luacrypto_aead.ko \
-	 $(PKG_BUILD_DIR)/lib/luacrypto_rng.ko \
-	 $(PKG_BUILD_DIR)/lib/luacrypto_comp.ko
-  AUTOLOAD:=$(call AutoLoad,30,lunatik,1)
+  URL:=$PKG_SOURCE_URL
+  TITLE:=Lunatik Lua Interpreter
+  DEPENDS:=+lua5.4 \
+	+LUNATIK_CRYPTO_AEAD:kmod-crypto-aead \
+	+LUNATIK_CRYPTO_RNG:kmod-crypto-rng \
+	+LUNATIK_CRYPTO_SHASH:kmod-crypto-hash \
+	+LUNATIK_CRYPTO_SHASH:kmod-crypto-hmac
+  FILES:=$(PKG_BUILD_DIR)/lunatik.ko \
+	 $(if $(CONFIG_LUNATIK_RUN),$(PKG_BUILD_DIR)/lunatik_run.ko) \
+	 $(foreach mod,$(LUNATIK_MODULES),$(PKG_BUILD_DIR)/lib/$(call LUNATIK_MODULE_FILENAME,$(mod)).ko)
+  AUTOLOAD:=$(call AutoLoad,30, \
+	lunatik \
+	$(if $(filter RCU,$(LUNATIK_MODULES)),luarcu) \
+	$(if $(filter DEVICE,$(LUNATIK_MODULES)),luadevice) \
+	$(if $(CONFIG_LUNATIK_RUN),lunatik_run) \
+	$(foreach mod,$(filter-out RCU DEVICE,$(LUNATIK_MODULES)),$(call LUNATIK_MODULE_FILENAME,$(mod))),1)
 endef
 
 define KernelPackage/lunatik/description
   Lunatik is a framework for scripting the Linux kernel with Lua.
 endef
 
-define Package/lunatik-scripts
-  $(call Package/lunatik/Default)
-  DEPENDS:=\
-	   +lua5.4
+define KernelPackage/lunatik/config
+	source "$(SOURCE)/Config.in"
 endef
 
-define Package/lunatik-scripts/description
-	Lunatik kernel scripts and userspace utilities
-endef
-
-define Package/lunatik-scripts/install
+define KernelPackage/lunatik/install
 	$(INSTALL_DIR) $(1)$(LUNATIK_INSTALL_PATH)
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/lunatik $(1)$(LUNATIK_INSTALL_PATH)
-	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)
 	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
-	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/linux
-	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/socket
-	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/syscall
-	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/crypto
 	$(INSTALL_DIR) $(1)$(LUA_5.4_INSTALL_PATH)/lunatik
+
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/driver.lua $(1)$(SCRIPTS_INSTALL_PATH)
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/mailbox.lua $(1)$(SCRIPTS_INSTALL_PATH)
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/net.lua $(1)$(SCRIPTS_INSTALL_PATH)
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/lunatik/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/socket/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/socket
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/syscall/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/syscall
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/crypto/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/crypto
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/lunatik/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/linux/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/linux
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/lunatik/config.lua $(1)$(LUA_5.4_INSTALL_PATH)/lunatik
+
+	$(if $(CONFIG_LUNATIK_CRYPTO_AEAD), \
+		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/crypto && \
+		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/crypto/aead.lua $(1)$(SCRIPTS_INSTALL_PATH)/crypto)
+	$(if $(CONFIG_LUNATIK_CRYPTO_SHASH), \
+		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/crypto && \
+		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/crypto/hkdf.lua $(1)$(SCRIPTS_INSTALL_PATH)/crypto)
+	$(if $(CONFIG_LUNATIK_LINUX), \
+		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/linux && \
+		$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/linux/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/linux)
+	$(if $(CONFIG_LUNATIK_SOCKET), \
+		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/socket && \
+		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/net.lua $(1)$(SCRIPTS_INSTALL_PATH) && \
+		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/socket/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/socket)
+	$(if $(CONFIG_LUNATIK_SYSCALL), \
+		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/syscall \
+		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/syscall/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/syscall)
 endef
 
 KERNEL_RELEASE := $(LINUX_VERSION)-$(LINUX_RELEASE)
@@ -154,7 +136,6 @@ LUNATIK_MODULES := $(strip $(LUNATIK_MODULES))
 define Build/Prepare
 	$(Build/Prepare/Default)
 	cd $(PKG_BUILD_DIR) && CC=$(CC) ./gensymbols.sh $(LUA_API) > lunatik_sym.h
-	#mkdir -p $(PKG_BUILD_DIR)/autogen/linux
 	cd $(PKG_BUILD_DIR) && CC=$(CC) lua5.4 configure.lua $(KERNEL_RELEASE) $(LINUX_DIR)/include "$(LUNATIK_MODULES)"
 	cp $(PKG_BUILD_DIR)/Kbuild $(PKG_BUILD_DIR)/Makefile
 	$(if $(call kernel_patchver_lt,5.15),rm $(PKG_BUILD_DIR)/include/stdarg.h)
@@ -169,5 +150,4 @@ define Build/Compile
 endef
 
 $(eval $(call KernelPackage,lunatik))
-$(eval $(call BuildPackage,lunatik-scripts))
 
