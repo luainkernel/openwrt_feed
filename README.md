@@ -40,7 +40,7 @@ Setup the target platform configuration as usual but make sure to select `kmod-l
 Kernel modules --->
     Other modules  --->
         <*> kmod-lunatik................. Lunatik Lua Interpreter
-             Lunatik Modules  --->
+             Lunatik modules  --->
 ```
 
 > [!NOTE]
