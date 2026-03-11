@@ -48,6 +48,12 @@ config LUNATIK_CRYPTO_COMP
 	help
 	  Compression algorithm support.
 
+config LUNATIK_DARKEN
+	bool "Lunatik Darken Support"
+	default m
+	help
+	  AES-256-CTR encrypted Lua script execution.
+
 config LUNATIK_DATA
 	bool "Lunatik Data Support"
 	default m
@@ -100,6 +106,12 @@ config LUNATIK_RUNTIME
 	  Enables the core Lunatik runtime environment, allowing creation of
 	  isolated Lua states within the kernel. This requires both device
 	  and RCU support.
+
+config LUNATIK_SKB
+	bool "Lunatik SKB Support"
+	default m
+	help
+	  Linux socket buffer (sk_buff) interface for Lua.
 
 config LUNATIK_SOCKET
 	bool "Lunatik Socket Support"
