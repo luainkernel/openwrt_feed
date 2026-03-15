@@ -129,6 +129,9 @@ define KernelPackage/lunatik/install
 	$(if $(CONFIG_LUNATIK_SYSCALL), \
 		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/syscall \
 		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/syscall/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/syscall)
+	$(if $(CONFIG_LUNATIK_DARKEN), \
+		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/lighten.lua $(1)$(SCRIPTS_INSTALL_PATH) && \
+		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/util.lua $(1)$(SCRIPTS_INSTALL_PATH))
 endef
 
 KERNEL_RELEASE := $(LINUX_VERSION)-$(LINUX_RELEASE)
