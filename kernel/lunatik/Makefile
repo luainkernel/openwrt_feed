@@ -148,6 +148,7 @@ define Build/Compile
 		KBUILD_AFLAGS="$(KBUILD_AFLAGS)" \
 		$(EXTRA_KCONFIG) \
 		modules
+	$(TARGET_CROSS)strip --strip-debug --strip-unneeded $(PKG_BUILD_DIR)/lib/luadarken.ko
 endef
 
 $(eval $(call KernelPackage,lunatik))
