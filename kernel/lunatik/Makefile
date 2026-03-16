@@ -8,13 +8,13 @@ include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/netfilter.mk
 
 PKG_NAME:=lunatik
-PKG_VERSION:=4.1.1
+PKG_VERSION:=4.2
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE_URL:=https://github.com/luainkernel/lunatik
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2026-02-03
-PKG_SOURCE_VERSION:=v4.1.1
+PKG_SOURCE_DATE:=2026-03-15
+PKG_SOURCE_VERSION:=e77a0879de013c5640f2bb6eb520fbdb6d9425db
 
 PKG_MAINTAINER:=Marcel Moura<marcel.moura@ringzero.com.br>
 PKG_BUILD_PARALLEL:=1
@@ -37,8 +37,9 @@ endif
 
 KLIBC_USR := klibc/usr
 
-LUNATIK_MODULES := DEVICE LINUX NOTIFIER SOCKET RCU THREAD FIB DATA PROBE SYSCALL XDP FIFO XTABLE NETFILTER \
-        COMPLETION CRYPTO_SHASH CRYPTO_SKCIPHER CRYPTO_AEAD CRYPTO_RNG CRYPTO_COMP CPU HID SIGNAL BYTEORDER
+# keep module order in sync with the main lunatik Makefile
+LUNATIK_MODULES := DEVICE LINUX NOTIFIER SOCKET RCU THREAD FIB DATA PROBE SYSCALL XDP FIFO SKB NETFILTER \
+        COMPLETION CRYPTO_SHASH CRYPTO_SKCIPHER CRYPTO_AEAD CRYPTO_RNG CRYPTO_COMP CPU HID SIGNAL BYTEORDER DARKEN
 
 LUNATIK_MODULE_FILENAME = $(strip \
 	$(if $(filter CRYPTO_AEAD,$(1)),luacrypto_aead, \
@@ -128,6 +129,9 @@ define KernelPackage/lunatik/install
 	$(if $(CONFIG_LUNATIK_SYSCALL), \
 		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/syscall \
 		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/syscall/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/syscall)
+	$(if $(CONFIG_LUNATIK_DARKEN), \
+		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/lighten.lua $(1)$(SCRIPTS_INSTALL_PATH) && \
+		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/util.lua $(1)$(SCRIPTS_INSTALL_PATH))
 endef
 
 KERNEL_RELEASE := $(LINUX_VERSION)-$(LINUX_RELEASE)
@@ -147,6 +151,7 @@ define Build/Compile
 		KBUILD_AFLAGS="$(KBUILD_AFLAGS)" \
 		$(EXTRA_KCONFIG) \
 		modules
+	$(KERNEL_CROSS)strip --strip-debug --strip-unneeded $(PKG_BUILD_DIR)/lib/luadarken.ko
 endef
 
 $(eval $(call KernelPackage,lunatik))
