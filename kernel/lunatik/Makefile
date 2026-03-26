@@ -13,8 +13,8 @@ PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE_URL:=https://github.com/luainkernel/lunatik
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2026-03-15
-PKG_SOURCE_VERSION:=e77a0879de013c5640f2bb6eb520fbdb6d9425db
+PKG_SOURCE_DATE:=2026-03-24
+PKG_SOURCE_VERSION:=1559dcf69329663f2b4aa6ef18d01d90fd225216
 
 PKG_MAINTAINER:=Marcel Moura<marcel.moura@ringzero.com.br>
 PKG_BUILD_PARALLEL:=1
@@ -39,15 +39,9 @@ KLIBC_USR := klibc/usr
 
 # keep module order in sync with the main lunatik Makefile
 LUNATIK_MODULES := DEVICE LINUX NOTIFIER SOCKET RCU THREAD FIB DATA PROBE SYSCALL XDP FIFO SKB NETFILTER \
-        COMPLETION CRYPTO_SHASH CRYPTO_SKCIPHER CRYPTO_AEAD CRYPTO_RNG CRYPTO_COMP CPU HID SIGNAL BYTEORDER DARKEN
+        COMPLETION CRYPTO CPU HID SIGNAL BYTEORDER DARKEN
 
-LUNATIK_MODULE_FILENAME = $(strip \
-	$(if $(filter CRYPTO_AEAD,$(1)),luacrypto_aead, \
-	$(if $(filter CRYPTO_COMP,$(1)),luacrypto_comp, \
-	$(if $(filter CRYPTO_RNG,$(1)),luacrypto_rng, \
-	$(if $(filter CRYPTO_SHASH,$(1)),luacrypto_shash, \
-	$(if $(filter CRYPTO_SKCIPHER,$(1)),luacrypto_skcipher, \
-	lua$(shell echo $(1) | tr '[:upper:]' '[:lower:]')))))))
+LUNATIK_MODULE_FILENAME = lua$(shell echo $(1) | tr '[:upper:]' '[:lower:]'))
 
 LUNATIK_MODULES := $(foreach c,$(LUNATIK_MODULES), \
     $(if $(CONFIG_LUNATIK_$(c)),$(c)))
@@ -78,10 +72,10 @@ define KernelPackage/lunatik
   URL:=$PKG_SOURCE_URL
   TITLE:=Lunatik Lua Interpreter
   DEPENDS:=+lua5.4 \
-	+LUNATIK_CRYPTO_AEAD:kmod-crypto-aead \
-	+LUNATIK_CRYPTO_RNG:kmod-crypto-rng \
-	+LUNATIK_CRYPTO_SHASH:kmod-crypto-hash \
-	+LUNATIK_CRYPTO_SHASH:kmod-crypto-hmac
+	+LUNATIK_CRYPTO:kmod-crypto-aead \
+	+LUNATIK_CRYPTO:kmod-crypto-rng \
+	+LUNATIK_CRYPTO:kmod-crypto-hash \
+	+LUNATIK_CRYPTO:kmod-crypto-hmac
   FILES:=$(PKG_BUILD_DIR)/lunatik.ko \
 	 $(if $(CONFIG_LUNATIK_RUN),$(PKG_BUILD_DIR)/lunatik_run.ko) \
 	 $(foreach mod,$(LUNATIK_MODULES),$(PKG_BUILD_DIR)/lib/$(call LUNATIK_MODULE_FILENAME,$(mod)).ko)
@@ -113,10 +107,7 @@ define KernelPackage/lunatik/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/lunatik/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/lunatik/config.lua $(1)$(LUA_5.4_INSTALL_PATH)/lunatik
 
-	$(if $(CONFIG_LUNATIK_CRYPTO_AEAD), \
-		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/crypto && \
-		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/crypto/aead.lua $(1)$(SCRIPTS_INSTALL_PATH)/crypto)
-	$(if $(CONFIG_LUNATIK_CRYPTO_SHASH), \
+	$(if $(CONFIG_LUNATIK_CRYPTO), \
 		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/crypto && \
 		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/crypto/hkdf.lua $(1)$(SCRIPTS_INSTALL_PATH)/crypto)
 	$(if $(CONFIG_LUNATIK_LINUX), \
