@@ -41,7 +41,7 @@ KLIBC_USR := klibc/usr
 LUNATIK_MODULES := DEVICE LINUX NOTIFIER SOCKET RCU THREAD FIB DATA PROBE SYSCALL XDP FIFO SKB NETFILTER \
         COMPLETION CRYPTO CPU HID SIGNAL BYTEORDER DARKEN
 
-LUNATIK_MODULE_FILENAME = lua$(shell echo $(1) | tr '[:upper:]' '[:lower:]'))
+LUNATIK_MODULE_FILENAME = lua$(shell echo $(1) | tr '[:upper:]' '[:lower:]')
 
 LUNATIK_MODULES := $(foreach c,$(LUNATIK_MODULES), \
     $(if $(CONFIG_LUNATIK_$(c)),$(c)))
