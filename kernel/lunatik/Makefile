@@ -52,11 +52,16 @@ EXTRA_KCONFIG := \
 	CONFIG_LUNATIK_DARKEN=m CONFIG_LUNATIK_XDP=n \
 	CONFIG_LUNATIK_HID=n
 
-# Enabled-module list fed to autogen.lua so it only emits specs for what the
-# package actually ships.
-LUNATIK_MODULES := DEVICE RCU LINUX NOTIFIER SOCKET THREAD FIB DATA PROBE \
-	SYSCALL FIFO SKB NETFILTER COMPLETION CRYPTO CPU SIGNAL BYTEORDER \
-	DARKEN
+# Optional sub-kmod binding names (lowercase); DEVICE and RCU always ship with
+# kmod-lunatik core so they aren't listed here.
+LUNATIK_SUBS := byteorder completion cpu crypto darken data fib fifo \
+	linux netfilter notifier probe signal skb socket syscall thread
+
+# Module list passed to autogen.lua. autogen's emit.config() writes
+# config.modules from it, so passing only the selected sub-kmods keeps
+# lunatik's runtime from trying to modprobe bindings that aren't installed.
+LUNATIK_MODULES := DEVICE RCU $(foreach s,$(LUNATIK_SUBS), \
+	$(if $(CONFIG_PACKAGE_kmod-lunatik-$(s)),$(s)))
 
 EXTRA_CFLAGS:= -Wimplicit-fallthrough=0 -Wno-declaration-after-statement \
 	-I$(PKG_BUILD_DIR) -I$(PKG_BUILD_DIR)/include -I$(PKG_BUILD_DIR)/lua \
