@@ -11,7 +11,7 @@ The feed is comprised by the following packages:
 In order to use this feed into an OpenWrt build, add the following line to your `feeds.conf.default`:
 
 ```sh
-src-git luainkernel https://github.com/luainkernel/openwrt_feed.git;openwrt-23.05
+src-git luainkernel https://github.com/luainkernel/openwrt_feed.git;lunatik-4.3
 ```
 
 After that, update and install the feed:
@@ -38,13 +38,15 @@ Setup the target platform configuration as usual but make sure to select `kmod-l
 
 ```txt
 Kernel modules --->
-    Other modules  --->
-        <*> kmod-lunatik................. Lunatik Lua Interpreter
-             Lunatik modules  --->
+    Lunatik  --->
+        <*> kmod-lunatik................. Lunatik Lua-in-kernel runtime (core)
+        <*> kmod-lunatik-byteorder....... Lunatik byteorder bindings
+        <*> kmod-lunatik-completion...... Lunatik completion bindings
+        ...
 ```
 
 > [!NOTE]
-> Optionally unselect modules by navigating to sub-menu `Lunatik Modules`, which is enabled once `kmod-lunatik` is selected as show above.
+> Each binding is a separate `kmod-lunatik-<name>` package under the same `Lunatik` submenu. Select only the bindings you need; `kmod-lunatik` (the core runtime) is required by all of them.
 
 ### Build an image for the target platform
 

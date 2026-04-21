@@ -8,13 +8,13 @@ include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/netfilter.mk
 
 PKG_NAME:=lunatik
-PKG_VERSION:=4.2
+PKG_VERSION:=4.3
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE_URL:=https://github.com/luainkernel/lunatik
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2026-03-15
-PKG_SOURCE_VERSION:=e77a0879de013c5640f2bb6eb520fbdb6d9425db
+PKG_SOURCE_DATE:=2026-04-21
+PKG_SOURCE_VERSION:=v4.3
 
 PKG_MAINTAINER:=Marcel Moura<marcel.moura@ringzero.com.br>
 PKG_BUILD_PARALLEL:=1
@@ -37,27 +37,31 @@ endif
 
 KLIBC_USR := klibc/usr
 
-# keep module order in sync with the main lunatik Makefile
-LUNATIK_MODULES := DEVICE LINUX NOTIFIER SOCKET RCU THREAD FIB DATA PROBE SYSCALL XDP FIFO SKB NETFILTER \
-        COMPLETION CRYPTO_SHASH CRYPTO_SKCIPHER CRYPTO_AEAD CRYPTO_RNG CRYPTO_COMP CPU HID SIGNAL BYTEORDER DARKEN
+# All bindings are always built; per-package FILES:= selects which .ko lands
+# in which ipk. LUNATIK_XDP off — eBPF toolchain out of scope.
+# HID off — depends on kmod-hid exports unavailable in minimal router kernels.
+EXTRA_KCONFIG := \
+	CONFIG_LUNATIK=m CONFIG_LUNATIK_RUNTIME=y CONFIG_LUNATIK_RUN=m \
+	CONFIG_LUNATIK_DEVICE=m CONFIG_LUNATIK_RCU=m \
+	CONFIG_LUNATIK_LINUX=m CONFIG_LUNATIK_NOTIFIER=m CONFIG_LUNATIK_SOCKET=m \
+	CONFIG_LUNATIK_THREAD=m CONFIG_LUNATIK_FIB=m CONFIG_LUNATIK_DATA=m \
+	CONFIG_LUNATIK_PROBE=m CONFIG_LUNATIK_SYSCALL=m CONFIG_LUNATIK_FIFO=m \
+	CONFIG_LUNATIK_SKB=m CONFIG_LUNATIK_NETFILTER=m \
+	CONFIG_LUNATIK_COMPLETION=m CONFIG_LUNATIK_CRYPTO=m CONFIG_LUNATIK_CPU=m \
+	CONFIG_LUNATIK_SIGNAL=m CONFIG_LUNATIK_BYTEORDER=m \
+	CONFIG_LUNATIK_DARKEN=m CONFIG_LUNATIK_XDP=n \
+	CONFIG_LUNATIK_HID=n
 
-LUNATIK_MODULE_FILENAME = $(strip \
-	$(if $(filter CRYPTO_AEAD,$(1)),luacrypto_aead, \
-	$(if $(filter CRYPTO_COMP,$(1)),luacrypto_comp, \
-	$(if $(filter CRYPTO_RNG,$(1)),luacrypto_rng, \
-	$(if $(filter CRYPTO_SHASH,$(1)),luacrypto_shash, \
-	$(if $(filter CRYPTO_SKCIPHER,$(1)),luacrypto_skcipher, \
-	lua$(shell echo $(1) | tr '[:upper:]' '[:lower:]')))))))
+# Optional sub-kmod binding names (lowercase); DEVICE and RCU always ship with
+# kmod-lunatik core so they aren't listed here.
+LUNATIK_SUBS := byteorder completion cpu crypto darken data fib fifo \
+	linux netfilter notifier probe signal skb socket syscall thread
 
-LUNATIK_MODULES := $(foreach c,$(LUNATIK_MODULES), \
-    $(if $(CONFIG_LUNATIK_$(c)),$(c)))
-
-LUNATIK_CONFIG_MODULES := $(foreach c,$(LUNATIK_MODULES),CONFIG_LUNATIK_$(c)=m)
-
-EXTRA_KCONFIG := CONFIG_LUNATIK=$(if $(CONFIG_PACKAGE_kmod-lunatik),m,n) \
-	CONFIG_LUNATIK_RUNTIME=$(if $(CONFIG_LUNATIK_RUNTIME),y,n) \
-	CONFIG_LUNATIK_RUN=$(if $(CONFIG_LUNATIK_RUN),m,n) \
-	$(LUNATIK_CONFIG_MODULES)
+# Module list passed to autogen.lua. autogen's emit.config() writes
+# config.modules from it, so passing only the selected sub-kmods keeps
+# lunatik's runtime from trying to modprobe bindings that aren't installed.
+LUNATIK_MODULES := DEVICE RCU $(foreach s,$(LUNATIK_SUBS), \
+	$(if $(CONFIG_PACKAGE_kmod-lunatik-$(s)),$(s)))
 
 EXTRA_CFLAGS:= -Wimplicit-fallthrough=0 -Wno-declaration-after-statement \
 	-I$(PKG_BUILD_DIR) -I$(PKG_BUILD_DIR)/include -I$(PKG_BUILD_DIR)/lua \
@@ -73,79 +77,18 @@ SCRIPTS_INSTALL_PATH:= /lib/modules/lua
 
 include $(INCLUDE_DIR)/package.mk
 
-define KernelPackage/lunatik
-  SUBMENU:=Other modules
-  URL:=$PKG_SOURCE_URL
-  TITLE:=Lunatik Lua Interpreter
-  DEPENDS:=+lua5.4 \
-	+LUNATIK_CRYPTO_AEAD:kmod-crypto-aead \
-	+LUNATIK_CRYPTO_RNG:kmod-crypto-rng \
-	+LUNATIK_CRYPTO_SHASH:kmod-crypto-hash \
-	+LUNATIK_CRYPTO_SHASH:kmod-crypto-hmac
-  FILES:=$(PKG_BUILD_DIR)/lunatik.ko \
-	 $(if $(CONFIG_LUNATIK_RUN),$(PKG_BUILD_DIR)/lunatik_run.ko) \
-	 $(foreach mod,$(LUNATIK_MODULES),$(PKG_BUILD_DIR)/lib/$(call LUNATIK_MODULE_FILENAME,$(mod)).ko)
-  AUTOLOAD:=$(call AutoLoad,30, \
-	lunatik \
-	$(if $(filter RCU,$(LUNATIK_MODULES)),luarcu) \
-	$(if $(filter DEVICE,$(LUNATIK_MODULES)),luadevice) \
-	$(if $(CONFIG_LUNATIK_RUN),lunatik_run) \
-	$(foreach mod,$(filter-out RCU DEVICE,$(LUNATIK_MODULES)),$(call LUNATIK_MODULE_FILENAME,$(mod))),1)
-endef
-
-define KernelPackage/lunatik/description
-  Lunatik is a framework for scripting the Linux kernel with Lua.
-endef
-
-define KernelPackage/lunatik/config
-	source "$(SOURCE)/Config.in"
-endef
-
-define KernelPackage/lunatik/install
-	$(INSTALL_DIR) $(1)$(LUNATIK_INSTALL_PATH)
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/lunatik $(1)$(LUNATIK_INSTALL_PATH)
-	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
-	$(INSTALL_DIR) $(1)$(LUA_5.4_INSTALL_PATH)/lunatik
-
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/driver.lua $(1)$(SCRIPTS_INSTALL_PATH)
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/mailbox.lua $(1)$(SCRIPTS_INSTALL_PATH)
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/lunatik/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/lunatik/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/lunatik/config.lua $(1)$(LUA_5.4_INSTALL_PATH)/lunatik
-
-	$(if $(CONFIG_LUNATIK_CRYPTO_AEAD), \
-		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/crypto && \
-		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/crypto/aead.lua $(1)$(SCRIPTS_INSTALL_PATH)/crypto)
-	$(if $(CONFIG_LUNATIK_CRYPTO_SHASH), \
-		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/crypto && \
-		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/crypto/hkdf.lua $(1)$(SCRIPTS_INSTALL_PATH)/crypto)
-	$(if $(CONFIG_LUNATIK_LINUX), \
-		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/linux && \
-		$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/linux/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/linux)
-	$(if $(CONFIG_LUNATIK_SOCKET), \
-		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/socket && \
-		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/net.lua $(1)$(SCRIPTS_INSTALL_PATH) && \
-		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/socket/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/socket)
-	$(if $(CONFIG_LUNATIK_SYSCALL), \
-		$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/syscall \
-		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/syscall/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/syscall)
-	$(if $(CONFIG_LUNATIK_DARKEN), \
-		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/lighten.lua $(1)$(SCRIPTS_INSTALL_PATH) && \
-		$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/util.lua $(1)$(SCRIPTS_INSTALL_PATH))
-endef
 
 KERNEL_RELEASE := $(LINUX_VERSION)-$(LINUX_RELEASE)
-LUNATIK_MODULES := $(strip $(LUNATIK_MODULES))
 
 define Build/Prepare
 	$(Build/Prepare/Default)
 	cd $(PKG_BUILD_DIR) && CC=$(CC) ./gensymbols.sh $(LUA_API) > lunatik_sym.h
-	cd $(PKG_BUILD_DIR) && CC=$(CC) lua5.4 configure.lua $(KERNEL_RELEASE) $(LINUX_DIR)/include "$(LUNATIK_MODULES)"
 	cp $(PKG_BUILD_DIR)/Kbuild $(PKG_BUILD_DIR)/Makefile
 	$(if $(call kernel_patchver_lt,5.15),rm $(PKG_BUILD_DIR)/include/stdarg.h)
 endef
 
 define Build/Compile
+	cd $(PKG_BUILD_DIR) && $(KERNEL_MAKE_FLAGS) CC=$(TARGET_CC) lua5.4 autogen.lua $(LINUX_DIR) $(KERNEL_RELEASE) "$(LUNATIK_MODULES)"
 	$(KERNEL_MAKE) M="$(PKG_BUILD_DIR)" \
 		EXTRA_CFLAGS="$(EXTRA_CFLAGS)" \
 		KBUILD_AFLAGS="$(KBUILD_AFLAGS)" \
@@ -154,5 +97,318 @@ define Build/Compile
 	$(KERNEL_CROSS)strip --strip-debug --strip-unneeded $(PKG_BUILD_DIR)/lib/luadarken.ko
 endef
 
-$(eval $(call KernelPackage,lunatik))
 
+# Core: kmod-lunatik
+
+define KernelPackage/lunatik
+  SUBMENU:=Lunatik
+  URL:=https://github.com/luainkernel/lunatik
+  TITLE:=Lunatik Lua-in-kernel runtime (core)
+  DEPENDS:=+lua5.4
+  DEFAULT:=y
+  FILES:= \
+	$(PKG_BUILD_DIR)/lunatik.ko \
+	$(PKG_BUILD_DIR)/lunatik_run.ko \
+	$(PKG_BUILD_DIR)/lib/luadevice.ko \
+	$(PKG_BUILD_DIR)/lib/luarcu.ko
+  AUTOLOAD:=$(call AutoLoad,30,lunatik luarcu luadevice lunatik_run,1)
+endef
+
+define KernelPackage/lunatik/description
+  Core Lunatik runtime: the Lua interpreter, the `lunatik run` driver,
+  the RCU hash table and the character device interface used by the
+  `lunatik` userspace CLI. Optional bindings are in separate sub-packages.
+endef
+
+define KernelPackage/lunatik/install
+	$(INSTALL_DIR) $(1)$(LUNATIK_INSTALL_PATH)
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/lunatik $(1)$(LUNATIK_INSTALL_PATH)
+	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
+	$(INSTALL_DIR) $(1)$(LUA_5.4_INSTALL_PATH)/lunatik
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/driver.lua $(1)$(SCRIPTS_INSTALL_PATH)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/mailbox.lua $(1)$(SCRIPTS_INSTALL_PATH)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/lunatik/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/lunatik/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/lunatik/config.lua $(1)$(LUA_5.4_INSTALL_PATH)/lunatik
+endef
+
+
+# Simple bindings: single .ko, no extra scripts, no external kmod deps
+
+define KernelPackage/lunatik-byteorder
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik byteorder bindings
+  DEPENDS:=+kmod-lunatik
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/luabyteorder.ko
+  AUTOLOAD:=$(call AutoLoad,31,luabyteorder)
+endef
+define KernelPackage/lunatik-byteorder/description
+  Byte-order swapping primitives.
+endef
+$(eval $(call KernelPackage,lunatik-byteorder))
+
+
+define KernelPackage/lunatik-completion
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik completion bindings
+  DEPENDS:=+kmod-lunatik
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/luacompletion.ko
+  AUTOLOAD:=$(call AutoLoad,31,luacompletion)
+endef
+define KernelPackage/lunatik-completion/description
+  Kernel completion synchronization primitive.
+endef
+$(eval $(call KernelPackage,lunatik-completion))
+
+
+define KernelPackage/lunatik-cpu
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik CPU bindings
+  DEPENDS:=+kmod-lunatik
+  FILES:=$(PKG_BUILD_DIR)/lib/luacpu.ko
+  AUTOLOAD:=$(call AutoLoad,31,luacpu)
+endef
+define KernelPackage/lunatik-cpu/description
+  Per-CPU statistics and topology exposure.
+endef
+$(eval $(call KernelPackage,lunatik-cpu))
+
+
+define KernelPackage/lunatik-data
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik data bindings
+  DEPENDS:=+kmod-lunatik
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/luadata.ko
+  AUTOLOAD:=$(call AutoLoad,31,luadata)
+endef
+define KernelPackage/lunatik-data/description
+  Raw byte-buffer accessor used by skb and other binary protocols.
+endef
+$(eval $(call KernelPackage,lunatik-data))
+
+
+define KernelPackage/lunatik-fib
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik FIB bindings
+  DEPENDS:=+kmod-lunatik
+  FILES:=$(PKG_BUILD_DIR)/lib/luafib.ko
+  AUTOLOAD:=$(call AutoLoad,31,luafib)
+endef
+define KernelPackage/lunatik-fib/description
+  Forwarding-information-base (routing) rule bindings.
+endef
+$(eval $(call KernelPackage,lunatik-fib))
+
+
+define KernelPackage/lunatik-fifo
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik FIFO bindings
+  DEPENDS:=+kmod-lunatik
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/luafifo.ko
+  AUTOLOAD:=$(call AutoLoad,31,luafifo)
+endef
+define KernelPackage/lunatik-fifo/description
+  Lockless kfifo queues usable across runtimes.
+endef
+$(eval $(call KernelPackage,lunatik-fifo))
+
+
+define KernelPackage/lunatik-notifier
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik notifier bindings
+  DEPENDS:=+kmod-lunatik
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/luanotifier.ko
+  AUTOLOAD:=$(call AutoLoad,31,luanotifier)
+endef
+define KernelPackage/lunatik-notifier/description
+  Keyboard, netdevice and VT notifier-chain bindings.
+endef
+$(eval $(call KernelPackage,lunatik-notifier))
+
+
+define KernelPackage/lunatik-probe
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik kprobe bindings
+  DEPENDS:=+kmod-lunatik
+  FILES:=$(PKG_BUILD_DIR)/lib/luaprobe.ko
+  AUTOLOAD:=$(call AutoLoad,31,luaprobe)
+endef
+define KernelPackage/lunatik-probe/description
+  Kernel probes (kprobes) — requires CONFIG_KPROBES in the target kernel.
+endef
+$(eval $(call KernelPackage,lunatik-probe))
+
+
+define KernelPackage/lunatik-signal
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik signal bindings
+  DEPENDS:=+kmod-lunatik
+  FILES:=$(PKG_BUILD_DIR)/lib/luasignal.ko
+  AUTOLOAD:=$(call AutoLoad,31,luasignal)
+endef
+define KernelPackage/lunatik-signal/description
+  POSIX signal delivery to userspace tasks.
+endef
+$(eval $(call KernelPackage,lunatik-signal))
+
+
+define KernelPackage/lunatik-skb
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik skb bindings
+  DEPENDS:=+kmod-lunatik +kmod-lunatik-data
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/luaskb.ko
+  AUTOLOAD:=$(call AutoLoad,31,luaskb)
+endef
+define KernelPackage/lunatik-skb/description
+  sk_buff accessor used by netfilter hooks and custom packet filters.
+endef
+$(eval $(call KernelPackage,lunatik-skb))
+
+
+define KernelPackage/lunatik-thread
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik thread bindings
+  DEPENDS:=+kmod-lunatik
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/luathread.ko
+  AUTOLOAD:=$(call AutoLoad,31,luathread)
+endef
+define KernelPackage/lunatik-thread/description
+  Kernel threads (spawn/stop) for running Lua runtimes in the background.
+endef
+$(eval $(call KernelPackage,lunatik-thread))
+
+
+# Bindings with their own Lua scripts
+
+define KernelPackage/lunatik-linux
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik linux API bindings
+  DEPENDS:=+kmod-lunatik
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/lualinux.ko
+  AUTOLOAD:=$(call AutoLoad,31,lualinux)
+endef
+define KernelPackage/lunatik-linux/description
+  Generic kernel facilities (random, jiffies, net devices, ...) plus the
+  autogenerated `linux.*` constant tables.
+endef
+define KernelPackage/lunatik-linux/install
+	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/linux
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/linux/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/linux
+endef
+$(eval $(call KernelPackage,lunatik-linux))
+
+
+define KernelPackage/lunatik-socket
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik socket bindings
+  DEPENDS:=+kmod-lunatik
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/luasocket.ko
+  AUTOLOAD:=$(call AutoLoad,31,luasocket)
+endef
+define KernelPackage/lunatik-socket/description
+  Kernel socket API for Lua runtimes, including the `net` helper library.
+endef
+define KernelPackage/lunatik-socket/install
+	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/socket
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/net.lua $(1)$(SCRIPTS_INSTALL_PATH)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/socket/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/socket
+endef
+$(eval $(call KernelPackage,lunatik-socket))
+
+
+define KernelPackage/lunatik-syscall
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik syscall bindings
+  DEPENDS:=+kmod-lunatik
+  FILES:=$(PKG_BUILD_DIR)/lib/luasyscall.ko
+  AUTOLOAD:=$(call AutoLoad,31,luasyscall)
+endef
+define KernelPackage/lunatik-syscall/description
+  System-call table lookup helpers (requires CONFIG_KPROBES).
+endef
+define KernelPackage/lunatik-syscall/install
+	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/syscall
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/syscall/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/syscall
+endef
+$(eval $(call KernelPackage,lunatik-syscall))
+
+
+# Bindings with external kmod deps
+
+define KernelPackage/lunatik-hid
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik HID bindings
+  DEPENDS:=+kmod-lunatik +kmod-hid
+  FILES:=$(PKG_BUILD_DIR)/lib/luahid.ko
+  AUTOLOAD:=$(call AutoLoad,31,luahid)
+endef
+define KernelPackage/lunatik-hid/description
+  Human Interface Device driver registration from Lua.
+endef
+$(eval $(call KernelPackage,lunatik-hid))
+
+
+define KernelPackage/lunatik-netfilter
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik netfilter bindings
+  DEPENDS:=+kmod-lunatik +kmod-lunatik-skb
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/luanetfilter.ko
+  AUTOLOAD:=$(call AutoLoad,32,luanetfilter)
+endef
+define KernelPackage/lunatik-netfilter/description
+  Netfilter hook registration. Hooks receive an skb; load order 32 so skb
+  (31) is in place first.
+endef
+$(eval $(call KernelPackage,lunatik-netfilter))
+
+
+define KernelPackage/lunatik-crypto
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik crypto bindings
+  DEPENDS:=+kmod-lunatik +kmod-crypto-aead +kmod-crypto-rng \
+	+kmod-crypto-hash +kmod-crypto-hmac
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/luacrypto.ko
+  AUTOLOAD:=$(call AutoLoad,31,luacrypto)
+endef
+define KernelPackage/lunatik-crypto/description
+  Linux kernel Crypto API bindings (hash, HMAC, AEAD, skcipher, RNG).
+endef
+define KernelPackage/lunatik-crypto/install
+	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/crypto
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/crypto/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/crypto
+endef
+$(eval $(call KernelPackage,lunatik-crypto))
+
+
+define KernelPackage/lunatik-darken
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik darken (encrypted scripts)
+  DEPENDS:=+kmod-lunatik +kmod-crypto-ctr
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/luadarken.ko
+  AUTOLOAD:=$(call AutoLoad,31,luadarken)
+endef
+define KernelPackage/lunatik-darken/description
+  AES-256-CTR encrypted Lua script execution. The `lighten` helper
+  script lives in /lib/modules/lua for encrypting payloads offline.
+endef
+define KernelPackage/lunatik-darken/install
+	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/lighten.lua $(1)$(SCRIPTS_INSTALL_PATH)/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/util.lua $(1)$(SCRIPTS_INSTALL_PATH)/
+endef
+$(eval $(call KernelPackage,lunatik-darken))
+
+
+$(eval $(call KernelPackage,lunatik))
