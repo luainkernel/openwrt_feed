@@ -8,13 +8,13 @@ include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/netfilter.mk
 
 PKG_NAME:=lunatik
-PKG_VERSION:=4.3
+PKG_VERSION:=4.3.1
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE_URL:=https://github.com/luainkernel/lunatik
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2026-04-21
-PKG_SOURCE_VERSION:=v4.3
+PKG_SOURCE_DATE:=2026-04-22
+PKG_SOURCE_VERSION:=v4.3.1
 
 PKG_MAINTAINER:=Marcel Moura<marcel.moura@ringzero.com.br>
 PKG_BUILD_PARALLEL:=1
@@ -37,31 +37,30 @@ endif
 
 KLIBC_USR := klibc/usr
 
-# All bindings are always built; per-package FILES:= selects which .ko lands
-# in which ipk. LUNATIK_XDP off — eBPF toolchain out of scope.
-# HID off — depends on kmod-hid exports unavailable in minimal router kernels.
-EXTRA_KCONFIG := \
-	CONFIG_LUNATIK=m CONFIG_LUNATIK_RUNTIME=y CONFIG_LUNATIK_RUN=m \
-	CONFIG_LUNATIK_DEVICE=m CONFIG_LUNATIK_RCU=m \
-	CONFIG_LUNATIK_LINUX=m CONFIG_LUNATIK_NOTIFIER=m CONFIG_LUNATIK_SOCKET=m \
-	CONFIG_LUNATIK_THREAD=m CONFIG_LUNATIK_FIB=m CONFIG_LUNATIK_DATA=m \
-	CONFIG_LUNATIK_PROBE=m CONFIG_LUNATIK_SYSCALL=m CONFIG_LUNATIK_FIFO=m \
-	CONFIG_LUNATIK_SKB=m CONFIG_LUNATIK_NETFILTER=m \
-	CONFIG_LUNATIK_COMPLETION=m CONFIG_LUNATIK_CRYPTO=m CONFIG_LUNATIK_CPU=m \
-	CONFIG_LUNATIK_SIGNAL=m CONFIG_LUNATIK_BYTEORDER=m \
-	CONFIG_LUNATIK_DARKEN=m CONFIG_LUNATIK_XDP=n \
-	CONFIG_LUNATIK_HID=n
+# Single source of truth for which sub-kmod bindings are built and shipped.
+# Everything in LUNATIK_SUBS that is not listed here goes to CONFIG_LUNATIK_<X>=n
+# and is skipped at compile time, so a `make defconfig` build (no menuconfig)
+# produces exactly these .ko/.ipk plus the kmod-lunatik core.
+LUNATIK_ENABLED_SUBS := byteorder completion darken data fifo linux netfilter \
+	notifier skb socket thread
 
-# Optional sub-kmod binding names (lowercase); DEVICE and RCU always ship with
-# kmod-lunatik core so they aren't listed here.
+# Full set of optional sub-kmods known to the feed. LUNATIK_XDP off — eBPF
+# toolchain out of scope. HID off — depends on kmod-hid exports unavailable in
+# minimal router kernels.
 LUNATIK_SUBS := byteorder completion cpu crypto darken data fib fifo \
 	linux netfilter notifier probe signal skb socket syscall thread
 
+EXTRA_KCONFIG := \
+	CONFIG_LUNATIK=m CONFIG_LUNATIK_RUNTIME=y CONFIG_LUNATIK_RUN=m \
+	CONFIG_LUNATIK_DEVICE=m CONFIG_LUNATIK_RCU=m \
+	CONFIG_LUNATIK_XDP=n CONFIG_LUNATIK_HID=n \
+	$(foreach s,$(LUNATIK_SUBS), \
+	  CONFIG_LUNATIK_$(shell echo $(s) | tr a-z A-Z)=$(if $(filter $(s),$(LUNATIK_ENABLED_SUBS)),m,n))
+
 # Module list passed to autogen.lua. autogen's emit.config() writes
-# config.modules from it, so passing only the selected sub-kmods keeps
-# lunatik's runtime from trying to modprobe bindings that aren't installed.
-LUNATIK_MODULES := DEVICE RCU $(foreach s,$(LUNATIK_SUBS), \
-	$(if $(CONFIG_PACKAGE_kmod-lunatik-$(s)),$(s)))
+# config.modules from it so lunatik's runtime only tries to modprobe
+# bindings that were actually built.
+LUNATIK_MODULES := DEVICE RCU $(LUNATIK_ENABLED_SUBS)
 
 EXTRA_CFLAGS:= -Wimplicit-fallthrough=0 -Wno-declaration-after-statement \
 	-I$(PKG_BUILD_DIR) -I$(PKG_BUILD_DIR)/include -I$(PKG_BUILD_DIR)/lua \
@@ -377,7 +376,6 @@ define KernelPackage/lunatik-crypto
   TITLE:=Lunatik crypto bindings
   DEPENDS:=+kmod-lunatik +kmod-crypto-aead +kmod-crypto-rng \
 	+kmod-crypto-hash +kmod-crypto-hmac
-  DEFAULT:=y
   FILES:=$(PKG_BUILD_DIR)/lib/luacrypto.ko
   AUTOLOAD:=$(call AutoLoad,31,luacrypto)
 endef
