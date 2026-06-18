@@ -8,13 +8,13 @@ include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/netfilter.mk
 
 PKG_NAME:=lunatik
-PKG_VERSION:=4.3.1
+PKG_VERSION:=4.4
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE_URL:=https://github.com/luainkernel/lunatik
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2026-04-22
-PKG_SOURCE_VERSION:=v4.3.1
+PKG_SOURCE_DATE:=2026-06-18
+PKG_SOURCE_VERSION:=v4.4
 
 PKG_MAINTAINER:=Marcel Moura<marcel.moura@ringzero.com.br>
 PKG_BUILD_PARALLEL:=1
@@ -42,13 +42,13 @@ KLIBC_USR := klibc/usr
 # and is skipped at compile time, so a `make defconfig` build (no menuconfig)
 # produces exactly these .ko/.ipk plus the kmod-lunatik core.
 LUNATIK_ENABLED_SUBS := byteorder completion darken data fifo linux netfilter \
-	notifier skb socket thread
+	notifier set skb socket thread
 
 # Full set of optional sub-kmods known to the feed. LUNATIK_XDP off — eBPF
 # toolchain out of scope. HID off — depends on kmod-hid exports unavailable in
 # minimal router kernels.
 LUNATIK_SUBS := byteorder completion cpu crypto darken data fib fifo \
-	linux netfilter notifier probe signal skb socket syscall thread
+	linux netfilter notifier probe set signal skb socket syscall thread
 
 EXTRA_KCONFIG := \
 	CONFIG_LUNATIK=m CONFIG_LUNATIK_RUNTIME=y CONFIG_LUNATIK_RUN=m \
@@ -241,6 +241,23 @@ define KernelPackage/lunatik-probe/description
   Kernel probes (kprobes) — requires CONFIG_KPROBES in the target kernel.
 endef
 $(eval $(call KernelPackage,lunatik-probe))
+
+
+define KernelPackage/lunatik-set
+  SUBMENU:=Lunatik
+  TITLE:=Lunatik set bindings
+  DEPENDS:=+kmod-lunatik
+  DEFAULT:=y
+  FILES:=$(PKG_BUILD_DIR)/lib/luaset.ko
+  AUTOLOAD:=$(call AutoLoad,31,luaset)
+endef
+define KernelPackage/lunatik-set/description
+  Compact immutable string set: a build-once sorted blob of keys plus an
+  offset array for large lookups such as domain blocklists. Lookups are
+  lockless and allocate nothing, so they are safe from softirq (netfilter,
+  XDP); with a one-byte separator set:has() also matches any suffix.
+endef
+$(eval $(call KernelPackage,lunatik-set))
 
 
 define KernelPackage/lunatik-signal
