@@ -11,7 +11,7 @@ The feed is comprised by the following packages:
 In order to use this feed into an OpenWrt build, add the following line to your `feeds.conf.default`:
 
 ```sh
-src-git luainkernel https://github.com/luainkernel/openwrt_feed.git;lunatik-4.3
+src-git luainkernel https://github.com/luainkernel/openwrt_feed.git;lunatik-4.4
 ```
 
 After that, update and install the feed:
