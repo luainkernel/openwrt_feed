@@ -41,8 +41,11 @@ KLIBC_USR := klibc/usr
 # Everything in LUNATIK_SUBS that is not listed here goes to CONFIG_LUNATIK_<X>=n
 # and is skipped at compile time, so a `make defconfig` build (no menuconfig)
 # produces exactly these .ko/.ipk plus the kmod-lunatik core.
-LUNATIK_ENABLED_SUBS := byteorder completion darken data fifo linux netfilter \
-	notifier set skb socket thread
+# Order matters, same rule as lunatik's Makefile: config.modules is loaded
+# left-to-right and unloaded right-to-left (rmmod), so a module must appear
+# AFTER all modules it depends on (e.g. data before skb before netfilter).
+LUNATIK_ENABLED_SUBS := linux notifier socket set thread data fifo skb \
+	netfilter completion byteorder darken
 
 # Full set of optional sub-kmods known to the feed. LUNATIK_XDP off — eBPF
 # toolchain out of scope. HID off — depends on kmod-hid exports unavailable in
