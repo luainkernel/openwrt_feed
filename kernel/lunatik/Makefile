@@ -20,23 +20,6 @@ PKG_MAINTAINER:=Marcel Moura<marcel.moura@ringzero.com.br>
 PKG_BUILD_PARALLEL:=1
 PKG_FLAGS:=nonshared
 
-ifeq ($(ARCH), x86)
-	ifdef CONFIG_X86_32
-		KLIBC_ARCH := i386
-		asflags-y += -D_REGPARM
-	else
-		KLIBC_ARCH := x86_64
-	endif
-else ifeq ($(ARCH), aarch64)
-	KLIBC_ARCH := arm64
-else ifeq ($(ARCH), mipsel)
-	KLIBC_ARCH := mips
-else
-	KLIBC_ARCH := $(ARCH)
-endif
-
-KLIBC_USR := klibc/usr
-
 # Single source of truth for which sub-kmod bindings are built and shipped.
 # Everything in LUNATIK_SUBS that is not listed here goes to CONFIG_LUNATIK_<X>=n
 # and is skipped at compile time, so a `make defconfig` build (no menuconfig)
@@ -65,11 +48,7 @@ EXTRA_KCONFIG := \
 # bindings that were actually built.
 LUNATIK_MODULES := DEVICE RCU $(LUNATIK_ENABLED_SUBS)
 
-EXTRA_CFLAGS:= -Wimplicit-fallthrough=0 -Wno-declaration-after-statement \
-	-I$(PKG_BUILD_DIR) -I$(PKG_BUILD_DIR)/include -I$(PKG_BUILD_DIR)/lua \
-	-I$(PKG_BUILD_DIR)/$(KLIBC_USR)/include/arch/$(KLIBC_ARCH)
-
-KBUILD_AFLAGS:= -I$(PKG_BUILD_DIR)/$(KLIBC_USR)/include/arch/$(KLIBC_ARCH)
+EXTRA_CFLAGS:= -Wno-declaration-after-statement
 
 LUA_API:= lua/lua.h lua/lauxlib.h lua/lualib.h
 
@@ -91,9 +70,8 @@ endef
 
 define Build/Compile
 	cd $(PKG_BUILD_DIR) && $(KERNEL_MAKE_FLAGS) CC=$(TARGET_CC) lua5.4 autogen.lua $(LINUX_DIR) $(KERNEL_RELEASE) "$(LUNATIK_MODULES)"
-	$(KERNEL_MAKE) M="$(PKG_BUILD_DIR)" \
+	cd $(PKG_BUILD_DIR) && $(KERNEL_MAKE) M="$(PKG_BUILD_DIR)" \
 		EXTRA_CFLAGS="$(EXTRA_CFLAGS)" \
-		KBUILD_AFLAGS="$(KBUILD_AFLAGS)" \
 		$(EXTRA_KCONFIG) \
 		modules
 	$(KERNEL_CROSS)strip --strip-debug --strip-unneeded $(PKG_BUILD_DIR)/lib/luadarken.ko
