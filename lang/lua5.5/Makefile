@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua
-PKG_VERSION:=5.4.6
+PKG_VERSION:=5.5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.lua.org/ftp/ \
 	https://www.tecgraf.puc-rio.br/lua/ftp/
-PKG_HASH:=7d5ea1b9cb6aa0b59ca3dde1c6adcb57ef83a1ba8e5432c0ecd06bf439b3ad88
+PKG_HASH:=57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d
 PKG_BUILD_PARALLEL:=1
 
 PKG_MAINTAINER:=Christian Marangi <ansuelsmth@gmail.com>
@@ -28,60 +28,60 @@ HOST_PATCH_DIR := ./patches-host
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
-define Package/lua5.4/Default
+define Package/lua5.5/Default
   SUBMENU:=Lua
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Lua programming language (version 5.4)
+  TITLE:=Lua programming language (version 5.5)
   URL:=https://www.lua.org/
 endef
 
-define Package/lua5.4/Default/description
+define Package/lua5.5/Default/description
   Lua is a powerful, efficient, lightweight, embeddable scripting language. It
   supports procedural programming, object-oriented programming, functional
   programming, data-driven programming, and data description.
 endef
 
-define Package/liblua5.4
-$(call Package/lua5.4/Default)
+define Package/liblua5.5
+$(call Package/lua5.5/Default)
   SUBMENU:=
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= (libraries)
-  ABI_VERSION:=5.4
+  ABI_VERSION:=5.5
 endef
 
-define Package/liblua5.4/description
-$(call Package/lua5.4/Default/description)
+define Package/liblua5.5/description
+$(call Package/lua5.5/Default/description)
  This package contains the Lua shared libraries, needed by other programs.
 endef
 
-define Package/lua5.4
-$(call Package/lua5.4/Default)
-  DEPENDS:=+liblua5.4
+define Package/lua5.5
+$(call Package/lua5.5/Default)
+  DEPENDS:=+liblua5.5
   TITLE+= (interpreter)
 endef
 
-define Package/lua5.4/description
-$(call Package/lua5.4/Default/description)
+define Package/lua5.5/description
+$(call Package/lua5.5/Default/description)
   This package contains the Lua language interpreter.
 endef
 
-define Package/luac5.4
-$(call Package/lua5.4/Default)
-  DEPENDS:=+liblua5.4
+define Package/luac5.5
+$(call Package/lua5.5/Default)
+  DEPENDS:=+liblua5.5
   TITLE+= (compiler)
 endef
 
-define Package/luac5.4/description
-$(call Package/lua5.4/Default/description)
+define Package/luac5.5/description
+$(call Package/lua5.5/Default/description)
   This package contains the Lua language compiler.
 endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	mv $(PKG_BUILD_DIR)/doc/lua.1 $(PKG_BUILD_DIR)/doc/lua5.4.1
-	mv $(PKG_BUILD_DIR)/doc/luac.1 $(PKG_BUILD_DIR)/doc/luac5.4.1
+	mv $(PKG_BUILD_DIR)/doc/lua.1 $(PKG_BUILD_DIR)/doc/lua5.5.1
+	mv $(PKG_BUILD_DIR)/doc/luac.1 $(PKG_BUILD_DIR)/doc/luac5.5.1
 endef
 
 TARGET_CFLAGS += -DLUA_USE_LINUX $(FPIC) -std=gnu99
@@ -104,8 +104,8 @@ endef
 
 define Host/Prepare
 	$(call Host/Prepare/Default)
-	mv $(HOST_BUILD_DIR)/doc/lua.1 $(HOST_BUILD_DIR)/doc/lua5.4.1
-	mv $(HOST_BUILD_DIR)/doc/luac.1 $(HOST_BUILD_DIR)/doc/luac5.4.1
+	mv $(HOST_BUILD_DIR)/doc/lua.1 $(HOST_BUILD_DIR)/doc/lua5.5.1
+	mv $(HOST_BUILD_DIR)/doc/luac.1 $(HOST_BUILD_DIR)/doc/luac5.5.1
 endef
 
 define Host/Configure
@@ -135,31 +135,31 @@ define Host/Install
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/lua5.4 $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/lua5.4/lua{,lib,conf}.h $(1)/usr/include/lua5.4/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/lua5.4/lua.hpp $(1)/usr/include/lua5.4/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/lua5.4/lauxlib.h $(1)/usr/include/lua5.4/
+	$(INSTALL_DIR) $(1)/usr/include/lua5.5 $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/lua5.5/lua{,lib,conf}.h $(1)/usr/include/lua5.5/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/lua5.5/lua.hpp $(1)/usr/include/lua5.5/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/lua5.5/lauxlib.h $(1)/usr/include/lua5.5/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liblua5.4.{a,so*} $(1)/usr/lib/
-	$(LN) liblua5.4.so.0.0.0 $(1)/usr/lib/liblualib5.4.so
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liblua5.5.{a,so*} $(1)/usr/lib/
+	$(LN) liblua5.5.so.0.0.0 $(1)/usr/lib/liblualib5.5.so
 endef
 
-define Package/liblua5.4/install
+define Package/liblua5.5/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liblua5.4.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liblua5.5.so* $(1)/usr/lib/
 endef
 
-define Package/lua5.4/install
+define Package/lua5.5/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/lua5.4 $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/lua5.5 $(1)/usr/bin/
 endef
 
-define Package/luac5.4/install
+define Package/luac5.5/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/luac5.4 $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/luac5.5 $(1)/usr/bin/
 endef
 
-$(eval $(call BuildPackage,liblua5.4))
-$(eval $(call BuildPackage,lua5.4))
-$(eval $(call BuildPackage,luac5.4))
+$(eval $(call BuildPackage,liblua5.5))
+$(eval $(call BuildPackage,lua5.5))
+$(eval $(call BuildPackage,luac5.5))
 $(eval $(call HostBuild))

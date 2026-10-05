@@ -1,6 +1,6 @@
 --- a/src/Makefile
 +++ b/src/Makefile
-@@ -126,7 +126,7 @@ c89:
+@@ -126,7 +126,7 @@
  	@echo ''
  
  FreeBSD NetBSD OpenBSD freebsd:
@@ -9,19 +9,12 @@
  
  generic: $(ALL)
  
-@@ -136,13 +136,13 @@ ios:
- Linux linux:	linux-noreadline
- 
- linux-noreadline:
--	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX" SYSLIBS="-Wl,-E -ldl"
-+	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX $(if $(USE_READLINE), -DLUA_USE_READLINE)" SYSLIBS="-Wl,-E -ldl $(if $(USE_READLINE), -lreadline)"
- 
- linux-readline:
- 	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX -DLUA_USE_READLINE" SYSLIBS="-Wl,-E -ldl -lreadline"
+@@ -137,7 +137,7 @@
+ 	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX" SYSLIBS="-Wl,-E -ldl"
  
  Darwin macos macosx:
 -	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_MACOSX -DLUA_USE_READLINE" SYSLIBS="-lreadline"
 +	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_MACOSX $(if $(USE_READLINE), -DLUA_USE_READLINE)" SYSLIBS="$(if $(USE_READLINE), -lreadline)"
  
  mingw:
- 	$(MAKE) "LUA_A=lua54.dll" "LUA_T=lua.exe" \
+ 	$(MAKE) "LUA_A=lua55.dll" "LUA_T=lua.exe" \
