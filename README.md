@@ -4,14 +4,14 @@
 The feed is comprised by the following packages:
 
 - lunatik
-- lua5.4, as a dependency for executing Lunatik user-space utilities
+- lua5.5, as a dependency for executing Lunatik user-space utilities
 
 ## Feed configuration
 
 In order to use this feed into an OpenWrt build, add the following line to your `feeds.conf.default`:
 
 ```sh
-src-git luainkernel https://github.com/luainkernel/openwrt_feed.git;lunatik-4.4
+src-git luainkernel https://github.com/luainkernel/openwrt_feed.git;lunatik-5
 ```
 
 After that, update and install the feed:
@@ -27,10 +27,10 @@ After that, update and install the feed:
 ## Build instructions
 
 > [!IMPORTANT]
-> Starting on Lunatik 4.0, Lua 5.4 is required for build configuration on the build machine.
+> Starting on Lunatik 5.0, Lua 5.5 is required for build configuration on the build machine.
 > Make sure to have it installed.
 >
-> For example, on Debian/Ubuntu machines, run `sudo apt-get install lua5.4`.
+> For example, on Debian/Ubuntu machines, run `sudo apt-get install lua5.5`.
 
 ### Configure buildroot
 
