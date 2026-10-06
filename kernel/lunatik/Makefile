@@ -19,6 +19,7 @@ PKG_SOURCE_VERSION:=v5.0
 PKG_MAINTAINER:=Marcel Moura<marcel.moura@ringzero.com.br>
 PKG_BUILD_PARALLEL:=1
 PKG_FLAGS:=nonshared
+PKG_BUILD_DEPENDS:=lua5.5/host
 
 ifeq ($(ARCH), x86)
 	ifdef CONFIG_X86_32

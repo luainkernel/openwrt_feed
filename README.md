@@ -26,11 +26,9 @@ After that, update and install the feed:
 
 ## Build instructions
 
-> [!IMPORTANT]
-> Starting on Lunatik 5.0, Lua 5.5 is required for build configuration on the build machine.
-> Make sure to have it installed.
->
-> For example, on Debian/Ubuntu machines, run `sudo apt-get install lua5.5`.
+> [!NOTE]
+> The build configuration runs Lua 5.5 on the build machine.
+> The feed builds it as a host package (`lua5.5/host`), so no Lua installation is required.
 
 ### Configure buildroot
 
