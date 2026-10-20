@@ -476,11 +476,17 @@ endef
 $(eval $(call KernelPackage,lunatik-netfilter))
 
 
+# The sig class links the kernel's signature API (crypto_alloc_sig and
+# crypto_sig_*), built under CRYPTO_SIG2, which nothing but
+# ASYMMETRIC_PUBLIC_KEY_SUBTYPE selects through 6.12 and which OpenWrt's
+# generic config leaves unset.
 define KernelPackage/lunatik-crypto
   SUBMENU:=Lunatik
   TITLE:=Lunatik crypto bindings
   DEPENDS:=+kmod-lunatik +kmod-crypto-aead +kmod-crypto-rng \
 	+kmod-crypto-hash +kmod-crypto-hmac
+  KCONFIG:=CONFIG_ASYMMETRIC_KEY_TYPE=y \
+	CONFIG_ASYMMETRIC_PUBLIC_KEY_SUBTYPE=y
   FILES:=$(PKG_BUILD_DIR)/lib/luacrypto.ko
   AUTOLOAD:=$(call AutoLoad,31,luacrypto)
 endef
