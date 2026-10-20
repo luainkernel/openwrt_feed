@@ -46,7 +46,7 @@ KLIBC_USR := klibc/usr
 # left-to-right and unloaded right-to-left (rmmod), so a module must appear
 # AFTER all modules it depends on (e.g. task before thread, data before skb
 # before netfilter).
-LUNATIK_ENABLED_SUBS := linux notifier socket netlink set task thread data fifo skb \
+LUNATIK_ENABLED_SUBS := linux notifier socket netlink task thread data set fifo skb \
 	netfilter completion crypto byteorder darken fsnotify
 
 # Full set of optional sub-kmods known to the feed. LUNATIK_XDP, LUNATIK_TC and
@@ -275,16 +275,22 @@ $(eval $(call KernelPackage,lunatik-probe))
 define KernelPackage/lunatik-set
   SUBMENU:=Lunatik
   TITLE:=Lunatik set bindings
-  DEPENDS:=+kmod-lunatik
+  DEPENDS:=+kmod-lunatik +kmod-lunatik-data
   DEFAULT:=y
   FILES:=$(PKG_BUILD_DIR)/lib/luaset.ko
-  AUTOLOAD:=$(call AutoLoad,31,luaset)
+  AUTOLOAD:=$(call AutoLoad,32,luaset)
 endef
 define KernelPackage/lunatik-set/description
   Compact immutable string set: a build-once sorted blob of keys plus an
   offset array for large lookups such as domain blocklists. Lookups are
   lockless and allocate nothing, so they are safe from softirq (netfilter,
-  XDP); with a one-byte separator set:has() also matches any suffix.
+  XDP); with a one-byte separator set:has() also matches any suffix. A set
+  can also be built over a data, or read from a set image (set.image).
+  Load order 32 so data (31) is in place first.
+endef
+define KernelPackage/lunatik-set/install
+	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/set
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/set/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/set
 endef
 $(eval $(call KernelPackage,lunatik-set))
 
