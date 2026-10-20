@@ -47,7 +47,7 @@ KLIBC_USR := klibc/usr
 # AFTER all modules it depends on (e.g. task before thread, data before skb
 # before netfilter).
 LUNATIK_ENABLED_SUBS := linux notifier socket netlink set task thread data fifo skb \
-	netfilter completion byteorder darken fsnotify
+	netfilter completion crypto byteorder darken fsnotify
 
 # Full set of optional sub-kmods known to the feed. LUNATIK_XDP, LUNATIK_TC and
 # LUNATIK_SCX off — eBPF toolchain out of scope. HID off — depends on kmod-hid
