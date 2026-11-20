@@ -152,7 +152,7 @@ define KernelPackage/lunatik/install
 	$(INSTALL_DIR) $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
 	$(INSTALL_DIR) $(1)$(LUA_5.5_INSTALL_PATH)/lunatik
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/driver.lua $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/class.lua $(1)$(SCRIPTS_INSTALL_PATH)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/common/class.lua $(1)$(SCRIPTS_INSTALL_PATH)
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/mailbox.lua $(1)$(SCRIPTS_INSTALL_PATH)
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib/lunatik/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/autogen/lunatik/*.lua $(1)$(SCRIPTS_INSTALL_PATH)/lunatik
