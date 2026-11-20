@@ -104,6 +104,7 @@ KERNEL_RELEASE := $(LINUX_VERSION)-$(LINUX_RELEASE)
 define Build/Prepare
 	$(Build/Prepare/Default)
 	cd $(PKG_BUILD_DIR) && CC=$(CC) ./gensymbols.sh $(LUA_API) > lunatik_sym.h
+	cd $(PKG_BUILD_DIR) && CC=$(CC) ./gensymbols.sh -p $(LUA_API) > lunatik_prefix.h
 	cp $(PKG_BUILD_DIR)/Kbuild $(PKG_BUILD_DIR)/Makefile
 	$(if $(call kernel_patchver_lt,5.15),rm $(PKG_BUILD_DIR)/include/stdarg.h)
 endef
